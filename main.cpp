@@ -1,5 +1,3 @@
-
-
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -93,10 +91,14 @@ class HelloTriangleApplication {
   VkFormat swapChainImageFormat;
   VkExtent2D swapChainExtent;
   std::vector<VkImageView> swapChainImageViews;
+  std::vector<VkFramebuffer> swapChainFramebuffers;
 
   VkRenderPass renderPass;
   VkPipelineLayout pipelineLayout;
   VkPipeline graphicsPipeline;
+
+  VkCommandPool commandPool;
+  std::vector<VkCommandBuffer> commandBuffers;
 
   void initWindow() {
     glfwInit();
@@ -104,7 +106,7 @@ class HelloTriangleApplication {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+    window = glfwCreateWindow(WIDTH, HEIGHT, "Odin", nullptr, nullptr);
   }
 
   void initVulkan() {
@@ -117,6 +119,9 @@ class HelloTriangleApplication {
     createImageViews();
     createRenderPass();
     createGraphicsPipeline();
+    createFrameBuffers();
+    createCommandPool();
+    createCommandBuffers();
   }
 
   void mainLoop() {
@@ -126,6 +131,12 @@ class HelloTriangleApplication {
   }
 
   void cleanup() {
+    vkDestroyCommandPool(device, commandPool, nullptr);
+
+    for (auto framebuffer : swapChainFramebuffers) {
+      vkDestroyFramebuffer(device, framebuffer, nullptr);
+    }
+
     vkDestroyPipeline(device, graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
@@ -147,6 +158,98 @@ class HelloTriangleApplication {
     glfwDestroyWindow(window);
 
     glfwTerminate();
+  }
+
+  void createCommandBuffers() {
+    commandBuffers.resize(swapChainFramebuffers.size());
+
+    VkCommandBufferAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
+
+    if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+      throw std::runtime_error("Failed to allocate command buffers!");
+    }
+
+    // Record buffer commands
+    for (size_t i = 0; i < commandBuffers.size(); i++) {
+      VkCommandBufferBeginInfo beginInfo = {};
+      beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+      beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+      beginInfo.pInheritanceInfo = nullptr;
+
+      if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
+        throw std::runtime_error("Failed to begin recording command buffer!");
+      }
+
+      VkRenderPassBeginInfo renderPassInfo = {};
+      renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+      renderPassInfo.renderPass = renderPass;
+      renderPassInfo.framebuffer = swapChainFramebuffers[i];
+      renderPassInfo.renderArea.offset = {0, 0};
+      renderPassInfo.renderArea.extent = swapChainExtent;
+
+      VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+      renderPassInfo.clearValueCount = 1;
+      renderPassInfo.pClearValues = &clearColor;
+
+      // Specify render pass commands
+      vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo,
+                           VK_SUBPASS_CONTENTS_INLINE);
+
+      // Bind pipeline to command buffers
+      vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        graphicsPipeline);
+
+      // Draw the triangle
+      vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+
+      // End render pass
+      vkCmdEndRenderPass(commandBuffers[i]);
+
+      if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
+        throw std::runtime_error("Failed to record command buffer");
+      }
+    }
+  }
+
+  void createCommandPool() {
+    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
+
+    VkCommandPoolCreateInfo poolInfo = {};
+    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+    poolInfo.flags = 0;
+
+    if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) !=
+        VK_SUCCESS) {
+      throw std::runtime_error("Failed to create command pool");
+    }
+  }
+
+  void createFrameBuffers() {
+    // Buffer size needs to match image views
+    swapChainFramebuffers.resize(swapChainImageViews.size());
+
+    for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+      VkImageView attachments[] = {swapChainImageViews[i]};
+
+      VkFramebufferCreateInfo frameBufferInfo = {};
+      frameBufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+      frameBufferInfo.renderPass = renderPass;
+      frameBufferInfo.attachmentCount = 1;
+      frameBufferInfo.pAttachments = attachments;
+      frameBufferInfo.width = swapChainExtent.width;
+      frameBufferInfo.height = swapChainExtent.height;
+      frameBufferInfo.layers = 1;
+
+      if (vkCreateFramebuffer(device, &frameBufferInfo, nullptr,
+                              &swapChainFramebuffers[i]) != VK_SUCCESS) {
+        throw std::runtime_error("Failed to create framebuffer!");
+      }
+    }
   }
 
   void createInstance() {
@@ -186,7 +289,7 @@ class HelloTriangleApplication {
     }
 
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-      throw std::runtime_error("failed to create instance!");
+      throw std::runtime_error("Failed to create instance!");
     }
   }
 
@@ -212,14 +315,14 @@ class HelloTriangleApplication {
 
     if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr,
                                      &debugMessenger) != VK_SUCCESS) {
-      throw std::runtime_error("failed to set up debug messenger!");
+      throw std::runtime_error("Failed to set up debug messenger!");
     }
   }
 
   void createSurface() {
     if (glfwCreateWindowSurface(instance, window, nullptr, &surface) !=
         VK_SUCCESS) {
-      throw std::runtime_error("failed to create window surface!");
+      throw std::runtime_error("Failed to create window surface!");
     }
   }
 
@@ -228,7 +331,7 @@ class HelloTriangleApplication {
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
     if (deviceCount == 0) {
-      throw std::runtime_error("failed to find GPUs with Vulkan support!");
+      throw std::runtime_error("Failed to find GPUs with Vulkan support!");
     }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
@@ -242,7 +345,7 @@ class HelloTriangleApplication {
     }
 
     if (physicalDevice == VK_NULL_HANDLE) {
-      throw std::runtime_error("failed to find a suitable GPU!");
+      throw std::runtime_error("Failed to find a suitable GPU!");
     }
   }
 
@@ -288,7 +391,7 @@ class HelloTriangleApplication {
 
     if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) !=
         VK_SUCCESS) {
-      throw std::runtime_error("failed to create logical device!");
+      throw std::runtime_error("Failed to create logical device!");
     }
 
     vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
@@ -343,7 +446,7 @@ class HelloTriangleApplication {
 
     if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) !=
         VK_SUCCESS) {
-      throw std::runtime_error("failed to create swap chain!");
+      throw std::runtime_error("Failed to create swap chain!");
     }
 
     vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
@@ -364,10 +467,13 @@ class HelloTriangleApplication {
       createInfo.image = swapChainImages[i];
       createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
       createInfo.format = swapChainImageFormat;
+
+      // Enable component swizzling
       createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
       createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
       createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
       createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
       createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
       createInfo.subresourceRange.baseMipLevel = 0;
       createInfo.subresourceRange.levelCount = 1;
@@ -376,7 +482,7 @@ class HelloTriangleApplication {
 
       if (vkCreateImageView(device, &createInfo, nullptr,
                             &swapChainImageViews[i]) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create image views!");
+        throw std::runtime_error("Failed to create image views!");
       }
     }
   }
@@ -385,13 +491,17 @@ class HelloTriangleApplication {
     VkAttachmentDescription colorAttachment = {};
     colorAttachment.format = swapChainImageFormat;
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    // Clear the framebuffer before and after rendering
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    // Store color data in memory for future read operations
     colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    // Configure if stencil data should be stored
     colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
+    // Configure subpasses. For now we just need the one for rendering
     VkAttachmentReference colorAttachmentRef = {};
     colorAttachmentRef.attachment = 0;
     colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -399,6 +509,7 @@ class HelloTriangleApplication {
     VkSubpassDescription subpass = {};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.colorAttachmentCount = 1;
+    // This can be directly referenced in our fragment shader
     subpass.pColorAttachments = &colorAttachmentRef;
 
     VkRenderPassCreateInfo renderPassInfo = {};
@@ -410,17 +521,20 @@ class HelloTriangleApplication {
 
     if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) !=
         VK_SUCCESS) {
-      throw std::runtime_error("failed to create render pass!");
+      throw std::runtime_error("Failed to create render pass!");
     }
   }
 
   void createGraphicsPipeline() {
+    // Load shaders from file 
     auto vertShaderCode = readFile("shaders/vert.spv");
     auto fragShaderCode = readFile("shaders/frag.spv");
 
+    // Create VkShaderModules around the shaders 
     VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
     VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
 
+    // Setup Vertex Stage
     VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
     vertShaderStageInfo.sType =
         VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -428,6 +542,7 @@ class HelloTriangleApplication {
     vertShaderStageInfo.module = vertShaderModule;
     vertShaderStageInfo.pName = "main";
 
+    // Setup Fragment Stage
     VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
     fragShaderStageInfo.sType =
         VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -438,30 +553,38 @@ class HelloTriangleApplication {
     VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo,
                                                       fragShaderStageInfo};
 
+    // Configure how vertices are treated in the pipeline
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
     vertexInputInfo.sType =
         VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 0;
     vertexInputInfo.vertexAttributeDescriptionCount = 0;
 
+    // Configure vertex layout. Treat three consecutive vertices as a triangle
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
     inputAssembly.sType =
         VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
+    // Configure the viewport
     VkViewport viewport = {};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = (float)swapChainExtent.width;
-    viewport.height = (float)swapChainExtent.height;
+    // It's suggested to not use the WIDTH and HEIGHT constants
+    // and instead opt to retrieve these values from the swap chain
+    viewport.width = static_cast<uint32_t>(swapChainExtent.width);
+    viewport.height = static_cast<uint32_t>(swapChainExtent.height);
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
+    // Configure the scissor rectangle which is used by the rasterizer
+    // what fragments to discard during rendering
     VkRect2D scissor = {};
     scissor.offset = {0, 0};
     scissor.extent = swapChainExtent;
 
+    // Combine viewport and scissor into a viewport state
     VkPipelineViewportStateCreateInfo viewportState = {};
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     viewportState.viewportCount = 1;
@@ -469,10 +592,13 @@ class HelloTriangleApplication {
     viewportState.scissorCount = 1;
     viewportState.pScissors = &scissor;
 
+    // Configure the rasterizer
     VkPipelineRasterizationStateCreateInfo rasterizer = {};
     rasterizer.sType =
         VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
+    // Set this to VK_TRUE in case you want to use shadow maps
+    // Geometry will then never pass through the rasterizer stage
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
@@ -480,21 +606,27 @@ class HelloTriangleApplication {
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
+    // Enables multisampling for anti-aliasing but it is disabled for now
     VkPipelineMultisampleStateCreateInfo multisampling = {};
     multisampling.sType =
         VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisampling.sampleShadingEnable = VK_FALSE;
     multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
+    // Configure color blending based on one framebuffer. For multiple
+    // framebuffers other settings need to be enabled. Right now it is
+    // disabled but can be useful for alpha blending later on
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
     colorBlendAttachment.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
         VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     colorBlendAttachment.blendEnable = VK_FALSE;
 
+    // Set constants for final color blending. Disabled for now
     VkPipelineColorBlendStateCreateInfo colorBlending = {};
     colorBlending.sType =
         VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    // For bitwise blending set this to VK_TRUE, but will disable blendEnable
     colorBlending.logicOpEnable = VK_FALSE;
     colorBlending.logicOp = VK_LOGIC_OP_COPY;
     colorBlending.attachmentCount = 1;
@@ -504,6 +636,8 @@ class HelloTriangleApplication {
     colorBlending.blendConstants[2] = 0.0f;
     colorBlending.blendConstants[3] = 0.0f;
 
+    // Create our pipeline layout. This is also the point where later on
+    // uniforms can be bound for use in our shaders
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 0;
@@ -511,9 +645,10 @@ class HelloTriangleApplication {
 
     if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr,
                                &pipelineLayout) != VK_SUCCESS) {
-      throw std::runtime_error("failed to create pipeline layout!");
+      throw std::runtime_error("Failed to create pipeline layout!");
     }
 
+    // Combine all components into our final graphics pipeline
     VkGraphicsPipelineCreateInfo pipelineInfo = {};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.stageCount = 2;
@@ -531,9 +666,10 @@ class HelloTriangleApplication {
 
     if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo,
                                   nullptr, &graphicsPipeline) != VK_SUCCESS) {
-      throw std::runtime_error("failed to create graphics pipeline!");
+      throw std::runtime_error("Failed to create graphics pipeline!");
     }
 
+    // Destroy shader modules once they have been initialized
     vkDestroyShaderModule(device, fragShaderModule, nullptr);
     vkDestroyShaderModule(device, vertShaderModule, nullptr);
   }
@@ -547,7 +683,7 @@ class HelloTriangleApplication {
     VkShaderModule shaderModule;
     if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) !=
         VK_SUCCESS) {
-      throw std::runtime_error("failed to create shader module!");
+      throw std::runtime_error("Failed to create shader module!");
     }
 
     return shaderModule;
@@ -740,7 +876,7 @@ class HelloTriangleApplication {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {
-      throw std::runtime_error("failed to open file!");
+      throw std::runtime_error("Failed to open file!");
     }
 
     size_t fileSize = (size_t)file.tellg();
