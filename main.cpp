@@ -17,10 +17,10 @@ const int WIDTH = 800;
 const int HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-const std::vector<const char*> validationLayers = {
+const std::vector<const char *> validationLayers = {
     "VK_LAYER_KHRONOS_validation"};
 
-const std::vector<const char*> deviceExtensions = {
+const std::vector<const char *> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 #ifdef NDEBUG
@@ -30,9 +30,9 @@ const bool enableValidationLayers = true;
 #endif
 
 VkResult CreateDebugUtilsMessengerEXT(
-    VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-    const VkAllocationCallbacks* pAllocator,
-    VkDebugUtilsMessengerEXT* pDebugMessenger) {
+    VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
+    const VkAllocationCallbacks *pAllocator,
+    VkDebugUtilsMessengerEXT *pDebugMessenger) {
   auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
       instance, "vkCreateDebugUtilsMessengerEXT");
   if (func != nullptr) {
@@ -44,7 +44,7 @@ VkResult CreateDebugUtilsMessengerEXT(
 
 void DestroyDebugUtilsMessengerEXT(VkInstance instance,
                                    VkDebugUtilsMessengerEXT debugMessenger,
-                                   const VkAllocationCallbacks* pAllocator) {
+                                   const VkAllocationCallbacks *pAllocator) {
   auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
       instance, "vkDestroyDebugUtilsMessengerEXT");
   if (func != nullptr) {
@@ -96,7 +96,7 @@ const std::vector<Vertex> vertices = {{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
                                       {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
                                       {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
 
-class HelloTriangleApplication {
+class Odin {
  public:
   void run() {
     initWindow();
@@ -106,7 +106,7 @@ class HelloTriangleApplication {
   }
 
  private:
-  GLFWwindow* window;
+  GLFWwindow *window;
 
   VkInstance instance;
   VkDebugUtilsMessengerEXT debugMessenger;
@@ -139,6 +139,9 @@ class HelloTriangleApplication {
 
   bool framebufferResized = false;
 
+  VkBuffer vertexBuffer;
+  VkDeviceMemory vertexBufferMemory;
+
   void initWindow() {
     glfwInit();
 
@@ -162,6 +165,7 @@ class HelloTriangleApplication {
     createGraphicsPipeline();
     createFrameBuffers();
     createCommandPool();
+    createVertexBuffer();
     createCommandBuffers();
     createSyncObjects();
   }
@@ -233,7 +237,8 @@ class HelloTriangleApplication {
 
     // This check should be done after vkQueuePresentKHR to avoid
     // improperly signalled Semaphores
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
+        framebufferResized) {
       framebufferResized = false;
       recreateSwapChain();
     } else if (result != VK_SUCCESS) {
@@ -265,6 +270,9 @@ class HelloTriangleApplication {
 
   void cleanup() {
     cleanupSwapChain();
+
+    vkDestroyBuffer(device, vertexBuffer, nullptr);
+    vkFreeMemory(device, vertexBufferMemory, nullptr);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
       vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
@@ -331,6 +339,13 @@ class HelloTriangleApplication {
       // Bind pipeline to command buffers
       vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
                         graphicsPipeline);
+
+      // Bind the vertex buffer to the pipeline
+      vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+
+      VkBuffer vertexBuffers[] = {vertexBuffer};
+      VkDeviceSize offsets[] = {0};
+      vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
 
       // Draw the triangle
       vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
@@ -410,7 +425,7 @@ class HelloTriangleApplication {
       createInfo.ppEnabledLayerNames = validationLayers.data();
 
       populateDebugMessengerCreateInfo(debugCreateInfo);
-      createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+      createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)&debugCreateInfo;
     } else {
       createInfo.enabledLayerCount = 0;
 
@@ -446,8 +461,58 @@ class HelloTriangleApplication {
     }
   }
 
+  void createVertexBuffer() {
+    VkBufferCreateInfo bufferInfo = {};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = sizeof(vertices[0]) * vertices.size();
+    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateBuffer(device, &bufferInfo, nullptr, &vertexBuffer) !=
+        VK_SUCCESS) {
+      throw std::runtime_error("Failed to create vertex buffer!");
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(device, vertexBuffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex =
+        findMemoryType(memRequirements.memoryTypeBits,
+                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    if (vkAllocateMemory(device, &allocInfo, nullptr, &vertexBufferMemory) !=
+        VK_SUCCESS) {
+      throw std::runtime_error("Failed to allocate vertex buffer memory!");
+    }
+
+    vkBindBufferMemory(device, vertexBuffer, vertexBufferMemory, 0);
+
+    // Map buffer to CPU memory
+    void *data;
+    vkMapMemory(device, vertexBufferMemory, 0, bufferInfo.size, 0, &data);
+    memcpy(data, vertices.data(), static_cast<size_t>(bufferInfo.size));
+    vkUnmapMemory(device, vertexBufferMemory);
+  }
+
+  uint32_t findMemoryType(uint32_t typeFilter,
+                          VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+      if (typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags &
+                                    properties) == properties) {
+        return i;
+      }
+    }
+    throw std::runtime_error("Failed to find suitable memory type!");
+  }
+
   void populateDebugMessengerCreateInfo(
-      VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+      VkDebugUtilsMessengerCreateInfoEXT &createInfo) {
     createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     createInfo.messageSeverity =
@@ -490,7 +555,7 @@ class HelloTriangleApplication {
     std::vector<VkPhysicalDevice> devices(deviceCount);
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
-    for (const auto& device : devices) {
+    for (const auto &device : devices) {
       if (isDeviceSuitable(device)) {
         physicalDevice = device;
         break;
@@ -738,12 +803,19 @@ class HelloTriangleApplication {
     VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo,
                                                       fragShaderStageInfo};
 
+    // Get vertex binding and attribute descriptions for shaders
+    auto bindingDescription = Vertex::getBindingDescription();
+    auto attributeDescriptions = Vertex::getAttributeDescriptions();
+
     // Configure how vertices are treated in the pipeline
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
     vertexInputInfo.sType =
         VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.vertexAttributeDescriptionCount =
+        static_cast<uint32_t>(attributeDescriptions.size());
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
     // Configure vertex layout. Treat three consecutive vertices as a triangle
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
@@ -859,11 +931,11 @@ class HelloTriangleApplication {
     vkDestroyShaderModule(device, vertShaderModule, nullptr);
   }
 
-  VkShaderModule createShaderModule(const std::vector<char>& code) {
+  VkShaderModule createShaderModule(const std::vector<char> &code) {
     VkShaderModuleCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     createInfo.codeSize = code.size();
-    createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+    createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
     VkShaderModule shaderModule;
     if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) !=
@@ -875,8 +947,8 @@ class HelloTriangleApplication {
   }
 
   VkSurfaceFormatKHR chooseSwapSurfaceFormat(
-      const std::vector<VkSurfaceFormatKHR>& availableFormats) {
-    for (const auto& availableFormat : availableFormats) {
+      const std::vector<VkSurfaceFormatKHR> &availableFormats) {
+    for (const auto &availableFormat : availableFormats) {
       if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
           availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
         return availableFormat;
@@ -887,10 +959,10 @@ class HelloTriangleApplication {
   }
 
   VkPresentModeKHR chooseSwapPresentMode(
-      const std::vector<VkPresentModeKHR>& availablePresentModes) {
+      const std::vector<VkPresentModeKHR> &availablePresentModes) {
     VkPresentModeKHR bestMode = VK_PRESENT_MODE_FIFO_KHR;
 
-    for (const auto& availablePresentMode : availablePresentModes) {
+    for (const auto &availablePresentMode : availablePresentModes) {
       if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
         return availablePresentMode;
       } else if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
@@ -901,7 +973,7 @@ class HelloTriangleApplication {
     return bestMode;
   }
 
-  VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) {
+  VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities) {
     // TODO Fix this from the tutorial 'Swap chain recreation'
     if (capabilities.currentExtent.width !=
         std::numeric_limits<uint32_t>::max()) {
@@ -980,7 +1052,7 @@ class HelloTriangleApplication {
     std::set<std::string> requiredExtensions(deviceExtensions.begin(),
                                              deviceExtensions.end());
 
-    for (const auto& extension : availableExtensions) {
+    for (const auto &extension : availableExtensions) {
       requiredExtensions.erase(extension.extensionName);
     }
 
@@ -999,7 +1071,7 @@ class HelloTriangleApplication {
                                              queueFamilies.data());
 
     int i = 0;
-    for (const auto& queueFamily : queueFamilies) {
+    for (const auto &queueFamily : queueFamilies) {
       if (queueFamily.queueCount > 0 &&
           queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
         indices.graphicsFamily = i;
@@ -1022,13 +1094,13 @@ class HelloTriangleApplication {
     return indices;
   }
 
-  std::vector<const char*> getRequiredExtensions() {
+  std::vector<const char *> getRequiredExtensions() {
     uint32_t glfwExtensionCount = 0;
-    const char** glfwExtensions;
+    const char **glfwExtensions;
     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-    std::vector<const char*> extensions(glfwExtensions,
-                                        glfwExtensions + glfwExtensionCount);
+    std::vector<const char *> extensions(glfwExtensions,
+                                         glfwExtensions + glfwExtensionCount);
 
     if (enableValidationLayers) {
       extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -1044,10 +1116,10 @@ class HelloTriangleApplication {
     std::vector<VkLayerProperties> availableLayers(layerCount);
     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-    for (const char* layerName : validationLayers) {
+    for (const char *layerName : validationLayers) {
       bool layerFound = false;
 
-      for (const auto& layerProperties : availableLayers) {
+      for (const auto &layerProperties : availableLayers) {
         if (strcmp(layerName, layerProperties.layerName) == 0) {
           layerFound = true;
           break;
@@ -1062,7 +1134,7 @@ class HelloTriangleApplication {
     return true;
   }
 
-  static std::vector<char> readFile(const std::string& filename) {
+  static std::vector<char> readFile(const std::string &filename) {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {
@@ -1083,25 +1155,26 @@ class HelloTriangleApplication {
   static VKAPI_ATTR VkBool32 VKAPI_CALL
   debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                 VkDebugUtilsMessageTypeFlagsEXT messageType,
-                const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-                void* pUserData) {
+                const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+                void *pUserData) {
     std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 
     return VK_FALSE;
   }
 
-  static void framebufferResizeCallback(GLFWwindow *window, int width, int height) {
-    auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+  static void framebufferResizeCallback(GLFWwindow *window, int width,
+                                        int height) {
+    auto app = reinterpret_cast<Odin *>(glfwGetWindowUserPointer(window));
     app->framebufferResized = true;
   }
 };
 
 int main() {
-  HelloTriangleApplication app;
+  Odin app;
 
   try {
     app.run();
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << std::endl;
     return EXIT_FAILURE;
   }
