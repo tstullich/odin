@@ -2,6 +2,8 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
 
 #include <algorithm>
 #include <array>
@@ -194,6 +196,7 @@ class Odin {
     createGraphicsPipeline();
     createFrameBuffers();
     createCommandPool();
+    createTextureImage();
     createVertexBuffer();
     createIndexBuffer();
     createUniformBuffers();
@@ -607,6 +610,13 @@ class Odin {
     }
 
     vkBindBufferMemory(device, buffer, bufferMemory, 0);
+  }
+
+  void createTextureImage() {
+    // TODO Implement
+    int texWidth, texHeight, texChannels;
+    stbi_uc *pixels = stbi_load("textures/texture.jpg", &texWidth, &texHeight,
+                                &texChannels, STBI_rgb_alpha);
   }
 
   void createVertexBuffer() {

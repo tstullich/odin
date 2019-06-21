@@ -6,7 +6,8 @@ enable_language(CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_SUPPRESS_REGENERATION true)
 
-include_directories(${VULKAN_INCLUDE_DIR})
+set(STB_INCLUDE_DIR "/usr/include/stb")
+include_directories(${VULKAN_INCLUDE_DIR} ${STB_INCLUDE_DIR})
 
 find_package(glfw3 3.2 REQUIRED)
 find_package(Vulkan REQUIRED)
