@@ -110,9 +110,9 @@ const std::vector<Vertex> vertices = {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
 const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
 
 struct UniformBufferObject {
-  glm::mat4 model;
-  glm::mat4 view;
-  glm::mat4 proj;
+  alignas(16) glm::mat4 model;
+  alignas(16) glm::mat4 view;
+  alignas(16) glm::mat4 proj;
 } ubo;
 
 class Odin {
@@ -167,6 +167,9 @@ class Odin {
   std::vector<VkBuffer> uniformBuffers;
   std::vector<VkDeviceMemory> uniformBuffersMemory;
 
+  VkDescriptorPool descriptorPool;
+  std::vector<VkDescriptorSet> descriptorSets;
+
   void initWindow() {
     glfwInit();
 
@@ -194,6 +197,8 @@ class Odin {
     createVertexBuffer();
     createIndexBuffer();
     createUniformBuffers();
+    createDescriptorPool();
+    createDescriptorSets();
     createCommandBuffers();
     createSyncObjects();
   }
@@ -278,6 +283,8 @@ class Odin {
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
   }
 
+  // Remember that the order of these functions is important.
+  // Changing them may cause unexpected problems when closing the program
   void cleanupSwapChain() {
     for (auto framebuffer : swapChainFramebuffers) {
       vkDestroyFramebuffer(device, framebuffer, nullptr);
@@ -301,6 +308,8 @@ class Odin {
       vkDestroyBuffer(device, uniformBuffers[i], nullptr);
       vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
     }
+
+    vkDestroyDescriptorPool(device, descriptorPool, nullptr);
   }
 
   void cleanup() {
@@ -388,6 +397,11 @@ class Odin {
       // Bind the vertex indices buffer to the pipeline
       vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0,
                            VK_INDEX_TYPE_UINT16);
+
+      // Bind descriptor sets to swap chain images
+      vkCmdBindDescriptorSets(commandBuffers[i],
+                              VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
+                              0, 1, &descriptorSets[i], 0, nullptr);
 
       // Draw the vertices using the indices
       vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()),
@@ -704,9 +718,62 @@ class Odin {
     ubo.proj[1][1] *= -1;
 
     void *data;
-    vkMapMemory(device, uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
+    vkMapMemory(device, uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0,
+                &data);
     memcpy(data, &ubo, sizeof(ubo));
     vkUnmapMemory(device, uniformBuffersMemory[currentImage]);
+  }
+
+  void createDescriptorPool() {
+    VkDescriptorPoolSize poolSize = {};
+    poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    poolSize.descriptorCount = static_cast<uint32_t>(swapChainImages.size());
+
+    VkDescriptorPoolCreateInfo poolInfo = {};
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount = 1;
+    poolInfo.pPoolSizes = &poolSize;
+    poolInfo.maxSets = static_cast<uint32_t>(swapChainImages.size());
+
+    if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) !=
+        VK_SUCCESS) {
+      throw std::runtime_error("Failed to create descriptor pool!");
+    }
+  }
+
+  void createDescriptorSets() {
+    std::vector<VkDescriptorSetLayout> layouts(swapChainImages.size(),
+                                               descriptorSetLayout);
+    VkDescriptorSetAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = descriptorPool;
+    allocInfo.descriptorSetCount =
+        static_cast<uint32_t>(swapChainImages.size());
+    allocInfo.pSetLayouts = layouts.data();
+
+    descriptorSets.resize(swapChainImages.size());
+    if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) !=
+        VK_SUCCESS) {
+      throw std::runtime_error("Failed to allocate descriptor sets!");
+    }
+
+    for (size_t i = 0; i < swapChainImages.size(); i++) {
+      VkDescriptorBufferInfo bufferInfo = {};
+      bufferInfo.buffer = uniformBuffers[i];
+      bufferInfo.offset = 0;
+      bufferInfo.range = sizeof(UniformBufferObject);
+
+      VkWriteDescriptorSet descriptorWrite = {};
+      descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      descriptorWrite.dstSet = descriptorSets[i];
+      descriptorWrite.dstBinding = 0;
+      descriptorWrite.dstArrayElement = 0;
+      descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      descriptorWrite.descriptorCount = 1;
+      descriptorWrite.pBufferInfo = &bufferInfo;
+
+      vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+    }
   }
 
   void populateDebugMessengerCreateInfo(
@@ -783,6 +850,8 @@ class Odin {
     createGraphicsPipeline();
     createFrameBuffers();
     createUniformBuffers();
+    createDescriptorPool();
+    createDescriptorSets();
     createCommandBuffers();
   }
 
@@ -1059,7 +1128,7 @@ class Odin {
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
     // Enables multisampling for anti-aliasing but it is disabled for now
