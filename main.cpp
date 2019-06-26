@@ -177,6 +177,9 @@ class Odin {
   VkImage textureImage;
   VkDeviceMemory textureImageMemory;
 
+  VkPipelineStageFlags sourceStage;
+  VkPipelineStageFlags destinationStage;
+
   void initWindow() {
     glfwInit();
 
@@ -477,10 +480,10 @@ class Odin {
   void createDescriptorSetLayout() {
     VkDescriptorSetLayoutBinding uboLayoutBinding = {};
     uboLayoutBinding.binding = 0;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     uboLayoutBinding.pImmutableSamplers = nullptr;
+    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
     VkDescriptorSetLayoutCreateInfo layoutInfo = {};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -657,8 +660,10 @@ class Odin {
       throw std::invalid_argument("unsupported layout transition!");
     }
 
-    vkCmdPipelineBarrier(commandBuffer, 0, 0, 0, 0, nullptr, 0, nullptr, 1,
-                         &barrier);
+    // TODO Read up on pipeline transitions
+    // https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPipelineStageFlagBits.html
+    vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0,
+                         nullptr, 0, nullptr, 1, &barrier);
 
     endSingleTimeCommands(commandBuffer);
   }
