@@ -1,19 +1,40 @@
-cmake_minimum_required (VERSION 3.13.4)
-project (odin)
-enable_language(C)
+cmake_minimum_required(VERSION 3.13.4)
+project(odin VERSION 0.1 LANGUAGES CXX)
 enable_language(CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_SUPPRESS_REGENERATION true)
 
-set(STB_INCLUDE_DIR "/usr/include/stb")
-set(TINY_OBJ_INCLUDE_DIR "/home/tim/src/tinyobjloader")
-
-include_directories(${VULKAN_INCLUDE_DIR} ${STB_INCLUDE_DIR} ${TINY_OBJ_INCLUDE_DIR})
-
 find_package(glfw3 3.2 REQUIRED)
 find_package(Vulkan REQUIRED)
 
-add_executable(${PROJECT_NAME} main.cpp)
+# External dependencies from git submodules
+set(GLM_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/glm)
+set(STB_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/stb)
+set(TINY_OBJ_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/tinyobjloader)
 
-target_link_libraries(${PROJECT_NAME} glfw Vulkan::Vulkan ${VULKAN_SDK/lib})
+set(ODIN_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
+set(ODIN_INSTALL_BIN_DIR ${PROJECT_SOURCE_DIR}/bin)
+
+find_package(Git QUIET)
+if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+    # Update submodules as needed
+    option(GIT_SUBMODULE "Check submodules during build" ON)
+    if(GIT_SUBMODULE)
+        message(STATUS "Submodule update")
+        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        RESULT_VARIABLE GIT_SUBMOD_RESULT)
+        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+            message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+        endif()
+    endif()
+endif()
+
+include_directories(${VULKAN_INCLUDE_DIR})
+include_directories(${STB_INCLUDE_DIR})
+include_directories(${TINY_OBJ_INCLUDE_DIR})
+include_directories(${GLM_INCLUDE_DIR})
+include_directories(${ODIN_INCLUDE_DIR})
+
+add_subdirectory(src)
