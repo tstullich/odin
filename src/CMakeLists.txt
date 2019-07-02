@@ -1,6 +1,7 @@
 add_subdirectory(renderer)
+add_subdirectory(vk)
 
-set(SOURCE_FILES main.cpp)
+set(SOURCE_FILES main.cpp vk/instance.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 

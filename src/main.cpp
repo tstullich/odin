@@ -24,6 +24,7 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
+#include "vk/instance.hpp"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -145,7 +146,7 @@ struct UniformBufferObject {
   alignas(16) glm::mat4 proj;
 } ubo;
 
-class Odin {
+class App {
  public:
   void run() {
     initWindow();
@@ -1875,7 +1876,7 @@ class Odin {
 
   static void framebufferResizeCallback(GLFWwindow *window, int width,
                                         int height) {
-    auto app = reinterpret_cast<Odin *>(glfwGetWindowUserPointer(window));
+    auto app = reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
     app->framebufferResized = true;
   }
 
@@ -1970,7 +1971,7 @@ class Odin {
 };
 
 int main() {
-  Odin app;
+  App app;
 
   try {
     app.run();
