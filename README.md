@@ -1,3 +1,3 @@
-# odin
-A repository to follow along the tutorial at https://vulkan-tutorial.com/
-and home of a possible future project
+# Odin - A Vulkan-based Path Tracer
+
+Odin is going to be a path tracer that will be written in Vulkan using compute shaders
