@@ -33,7 +33,7 @@ struct SwapChainSupportDetails {
 
 class DeviceManager {
  public:
-  DeviceManager(const Instance& instance, const VkSurfaceKHR &surface,
+  DeviceManager(const Instance &instance, const VkSurfaceKHR &surface,
                 bool enableValidationLayers);
 
   ~DeviceManager();
@@ -60,9 +60,11 @@ class DeviceManager {
 
   void pickPhysicalDevice(const Instance &instance, VkSurfaceKHR surface);
 
-  QueueFamilyIndices findQueueFamilies(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+  QueueFamilyIndices findQueueFamilies(VkPhysicalDevice physicalDevice,
+                                       VkSurfaceKHR surface);
 
-  SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+  SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice physicalDevice,
+                                                VkSurfaceKHR surface);
 
   const std::vector<const char *> deviceExtensions = {
       VK_KHR_SWAPCHAIN_EXTENSION_NAME};
@@ -74,5 +76,4 @@ class DeviceManager {
   VkQueue presentQueue;
 };
 }  // namespace odin
-
 #endif  // ODIN_DEVICE_MANAGER_HPP
