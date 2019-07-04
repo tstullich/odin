@@ -40,7 +40,7 @@ class DeviceManager {
 
   QueueFamilyIndices findQueueFamilies(VkSurfaceKHR surface);
 
-  const VkDevice getDevice() const;
+  const VkDevice getLogicalDevice() const;
 
   const VkQueue getGraphicsQueue() const;
 
@@ -48,7 +48,7 @@ class DeviceManager {
 
   const VkQueue getPresentationQueue() const;
 
-  SwapChainSupportDetails querySwapChainSupport(VkSurfaceKHR surface);
+  SwapChainSupportDetails getSwapChainSupport() const;
 
  private:
   bool checkDeviceExtensionSupport(VkPhysicalDevice device);
@@ -69,7 +69,7 @@ class DeviceManager {
 
   SwapChainSupportDetails swapChainSupportDetails;
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-  VkDevice device;
+  VkDevice logicalDevice;
   VkQueue graphicsQueue;
   VkQueue presentQueue;
 };

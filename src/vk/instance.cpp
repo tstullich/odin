@@ -4,7 +4,7 @@ odin::Instance::Instance(bool debug) {
   enableValidationLayers = debug;
 
   if (enableValidationLayers && !checkValidationLayerSupport()) {
-    throw std::runtime_error("validation layers requested, but not available!");
+    throw std::runtime_error("Validation layers requested, but not available!");
   }
 
   VkApplicationInfo appInfo = {};

@@ -27,6 +27,7 @@
 
 #include "vk/device_manager.hpp"
 #include "vk/instance.hpp"
+#include "vk/swapchain.hpp"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -120,12 +121,7 @@ class App {
 
   std::unique_ptr<DeviceManager> deviceManager;
 
-  VkSwapchainKHR swapChain;
-  std::vector<VkImage> swapChainImages;
-  VkFormat swapChainImageFormat;
-  VkExtent2D swapChainExtent;
-  std::vector<VkImageView> swapChainImageViews;
-  std::vector<VkFramebuffer> swapChainFramebuffers;
+  std::unique_ptr<Swapchain> swapChain;
 
   VkRenderPass renderPass;
   VkDescriptorSetLayout descriptorSetLayout;
@@ -217,17 +213,17 @@ class App {
 
     // Needed so that we do not destroy resources while
     // draw calls may still be going on
-    vkDeviceWaitIdle(deviceManager->getDevice());
+    vkDeviceWaitIdle(deviceManager->getLogicalDevice());
   }
 
   void drawFrame() {
-    vkWaitForFences(deviceManager->getDevice(), 1,
+    vkWaitForFences(deviceManager->getLogicalDevice(), 1,
                     &inFlightFences[currentFrame], VK_TRUE,
                     std::numeric_limits<uint64_t>::max());
 
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(
-        deviceManager->getDevice(), swapChain,
+        deviceManager->getLogicalDevice(), swapChain->getSwapchain(),
         std::numeric_limits<uint64_t>::max(),
         imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
@@ -257,7 +253,8 @@ class App {
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    vkResetFences(deviceManager->getDevice(), 1, &inFlightFences[currentFrame]);
+    vkResetFences(deviceManager->getLogicalDevice(), 1,
+                  &inFlightFences[currentFrame]);
 
     if (vkQueueSubmit(deviceManager->getGraphicsQueue(), 1, &submitInfo,
                       inFlightFences[currentFrame]) != VK_SUCCESS) {
@@ -270,7 +267,7 @@ class App {
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
 
-    VkSwapchainKHR swapChains[] = {swapChain};
+    VkSwapchainKHR swapChains[] = {swapChain->getSwapchain()};
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = swapChains;
 
@@ -292,71 +289,80 @@ class App {
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
   }
 
-  // Remember that the order of these functions is important.
-  // Changing them may cause unexpected problems when closing the program
   void cleanupSwapChain() {
-    vkDestroyImageView(deviceManager->getDevice(), depthImageView, nullptr);
-    vkDestroyImage(deviceManager->getDevice(), depthImage, nullptr);
-    vkFreeMemory(deviceManager->getDevice(), depthImageMemory, nullptr);
+    vkDestroyImageView(deviceManager->getLogicalDevice(), depthImageView,
+                       nullptr);
+    vkDestroyImage(deviceManager->getLogicalDevice(), depthImage, nullptr);
+    vkFreeMemory(deviceManager->getLogicalDevice(), depthImageMemory, nullptr);
 
     for (auto framebuffer : swapChainFramebuffers) {
-      vkDestroyFramebuffer(deviceManager->getDevice(), framebuffer, nullptr);
+      vkDestroyFramebuffer(deviceManager->getLogicalDevice(), framebuffer,
+                           nullptr);
     }
 
-    vkFreeCommandBuffers(deviceManager->getDevice(), commandPool,
+    vkFreeCommandBuffers(deviceManager->getLogicalDevice(), commandPool,
                          static_cast<uint32_t>(commandBuffers.size()),
                          commandBuffers.data());
 
-    vkDestroyPipeline(deviceManager->getDevice(), graphicsPipeline, nullptr);
-    vkDestroyPipelineLayout(deviceManager->getDevice(), pipelineLayout,
+    vkDestroyPipeline(deviceManager->getLogicalDevice(), graphicsPipeline,
+                      nullptr);
+    vkDestroyPipelineLayout(deviceManager->getLogicalDevice(), pipelineLayout,
                             nullptr);
-    vkDestroyRenderPass(deviceManager->getDevice(), renderPass, nullptr);
+    vkDestroyRenderPass(deviceManager->getLogicalDevice(), renderPass, nullptr);
 
     for (auto imageView : swapChainImageViews) {
-      vkDestroyImageView(deviceManager->getDevice(), imageView, nullptr);
+      vkDestroyImageView(deviceManager->getLogicalDevice(), imageView, nullptr);
     }
 
-    vkDestroySwapchainKHR(deviceManager->getDevice(), swapChain, nullptr);
+    vkDestroySwapchainKHR(deviceManager->getLogicalDevice(), swapChain,
+                          nullptr);
 
     for (size_t i = 0; i < swapChainImages.size(); i++) {
-      vkDestroyBuffer(deviceManager->getDevice(), uniformBuffers[i], nullptr);
-      vkFreeMemory(deviceManager->getDevice(), uniformBuffersMemory[i],
+      vkDestroyBuffer(deviceManager->getLogicalDevice(), uniformBuffers[i],
+                      nullptr);
+      vkFreeMemory(deviceManager->getLogicalDevice(), uniformBuffersMemory[i],
                    nullptr);
     }
 
-    vkDestroyDescriptorPool(deviceManager->getDevice(), descriptorPool,
+    vkDestroyDescriptorPool(deviceManager->getLogicalDevice(), descriptorPool,
                             nullptr);
   }
 
   void cleanup() {
     cleanupSwapChain();
 
-    vkDestroySampler(deviceManager->getDevice(), textureSampler, nullptr);
-    vkDestroyImageView(deviceManager->getDevice(), textureImageView, nullptr);
+    vkDestroySampler(deviceManager->getLogicalDevice(), textureSampler,
+                     nullptr);
+    vkDestroyImageView(deviceManager->getLogicalDevice(), textureImageView,
+                       nullptr);
 
-    vkDestroyImage(deviceManager->getDevice(), textureImage, nullptr);
-    vkFreeMemory(deviceManager->getDevice(), textureImageMemory, nullptr);
+    vkDestroyImage(deviceManager->getLogicalDevice(), textureImage, nullptr);
+    vkFreeMemory(deviceManager->getLogicalDevice(), textureImageMemory,
+                 nullptr);
 
-    vkDestroyDescriptorSetLayout(deviceManager->getDevice(),
+    vkDestroyDescriptorSetLayout(deviceManager->getLogicalDevice(),
                                  descriptorSetLayout, nullptr);
 
-    vkDestroyBuffer(deviceManager->getDevice(), indexBuffer, nullptr);
-    vkFreeMemory(deviceManager->getDevice(), indexBufferMemory, nullptr);
+    vkDestroyBuffer(deviceManager->getLogicalDevice(), indexBuffer, nullptr);
+    vkFreeMemory(deviceManager->getLogicalDevice(), indexBufferMemory, nullptr);
 
-    vkDestroyBuffer(deviceManager->getDevice(), vertexBuffer, nullptr);
-    vkFreeMemory(deviceManager->getDevice(), vertexBufferMemory, nullptr);
+    vkDestroyBuffer(deviceManager->getLogicalDevice(), vertexBuffer, nullptr);
+    vkFreeMemory(deviceManager->getLogicalDevice(), vertexBufferMemory,
+                 nullptr);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-      vkDestroySemaphore(deviceManager->getDevice(),
+      vkDestroySemaphore(deviceManager->getLogicalDevice(),
                          imageAvailableSemaphores[i], nullptr);
-      vkDestroySemaphore(deviceManager->getDevice(),
+      vkDestroySemaphore(deviceManager->getLogicalDevice(),
                          renderFinishedSemaphores[i], nullptr);
-      vkDestroyFence(deviceManager->getDevice(), inFlightFences[i], nullptr);
+      vkDestroyFence(deviceManager->getLogicalDevice(), inFlightFences[i],
+                     nullptr);
     }
 
-    vkDestroyCommandPool(deviceManager->getDevice(), commandPool, nullptr);
+    vkDestroyCommandPool(deviceManager->getLogicalDevice(), commandPool,
+                         nullptr);
 
-    vkDestroyDevice(deviceManager->getDevice(), nullptr);
+    vkDestroyDevice(deviceManager->getLogicalDevice(), nullptr);
 
     vkDestroySurfaceKHR(instance->getInstance(), surface, nullptr);
 
@@ -373,7 +379,7 @@ class App {
     allocInfo.commandBufferCount = 1;
 
     VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(deviceManager->getDevice(), &allocInfo,
+    vkAllocateCommandBuffers(deviceManager->getLogicalDevice(), &allocInfo,
                              &commandBuffer);
 
     VkCommandBufferBeginInfo beginInfo = {};
@@ -397,12 +403,12 @@ class App {
                   VK_NULL_HANDLE);
     vkQueueWaitIdle(deviceManager->getGraphicsQueue());
 
-    vkFreeCommandBuffers(deviceManager->getDevice(), commandPool, 1,
+    vkFreeCommandBuffers(deviceManager->getLogicalDevice(), commandPool, 1,
                          &commandBuffer);
   }
 
   void createCommandBuffers() {
-    commandBuffers.resize(swapChainFramebuffers.size());
+    commandBuffers.resize(swapChain->getFrameBufferSizes());
 
     VkCommandBufferAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -410,7 +416,7 @@ class App {
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-    if (vkAllocateCommandBuffers(deviceManager->getDevice(), &allocInfo,
+    if (vkAllocateCommandBuffers(deviceManager->getLogicalDevice(), &allocInfo,
                                  commandBuffers.data()) != VK_SUCCESS) {
       throw std::runtime_error("Failed to allocate command buffers!");
     }
@@ -429,9 +435,9 @@ class App {
       VkRenderPassBeginInfo renderPassInfo = {};
       renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
       renderPassInfo.renderPass = renderPass;
-      renderPassInfo.framebuffer = swapChainFramebuffers[i];
+      renderPassInfo.framebuffer = swapChain->getFrameBuffer(i);
       renderPassInfo.renderArea.offset = {0, 0};
-      renderPassInfo.renderArea.extent = swapChainExtent;
+      renderPassInfo.renderArea.extent = swapChain->getExtent();
 
       // Because we have multiple attachments with VK_ATTACHMENT_LOAD_OP_CLEAR
       std::array<VkClearValue, 2> clearValues = {};
@@ -486,8 +492,8 @@ class App {
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
     poolInfo.flags = 0;
 
-    if (vkCreateCommandPool(deviceManager->getDevice(), &poolInfo, nullptr,
-                            &commandPool) != VK_SUCCESS) {
+    if (vkCreateCommandPool(deviceManager->getLogicalDevice(), &poolInfo,
+                            nullptr, &commandPool) != VK_SUCCESS) {
       throw std::runtime_error("Failed to create command pool");
     }
   }
@@ -530,13 +536,15 @@ class App {
   void createDepthResources() {
     VkFormat depthFormat = findDepthFormat();
 
+    auto swapChainExtent = swapChain->getExtent();
     createImage(
         swapChainExtent.width, swapChainExtent.height, 1, depthFormat,
         VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
 
     depthImageView =
-        createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+        swapChain->createImageView(deviceManager->getLogicalDevice(), depthImage,
+                        depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
     transitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
@@ -565,38 +573,39 @@ class App {
     layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     layoutInfo.pBindings = bindings.data();
 
-    if (vkCreateDescriptorSetLayout(deviceManager->getDevice(), &layoutInfo,
-                                    nullptr,
+    if (vkCreateDescriptorSetLayout(deviceManager->getLogicalDevice(),
+                                    &layoutInfo, nullptr,
                                     &descriptorSetLayout) != VK_SUCCESS) {
       throw std::runtime_error("Failed to create descriptor set layout!");
     }
   }
 
-  void createFrameBuffers() {
-    // Buffer size needs to match image views
-    swapChainFramebuffers.resize(swapChainImageViews.size());
+  //void createFrameBuffers() {
+  //  // Buffer size needs to match image views
+  //  swapChainFramebuffers.resize(swapChainImageViews.size());
 
-    for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-      std::array<VkImageView, 2> attachments = {swapChainImageViews[i],
-                                                depthImageView};
+  //  for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+  //    std::array<VkImageView, 2> attachments = {swapChainImageViews[i],
+  //                                              depthImageView};
 
-      VkFramebufferCreateInfo frameBufferInfo = {};
-      frameBufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-      frameBufferInfo.renderPass = renderPass;
-      frameBufferInfo.attachmentCount =
-          static_cast<uint32_t>(attachments.size());
-      frameBufferInfo.pAttachments = attachments.data();
-      frameBufferInfo.width = swapChainExtent.width;
-      frameBufferInfo.height = swapChainExtent.height;
-      frameBufferInfo.layers = 1;
+  //    auto swapChainExtent = swapChain->getExtent();
+  //    VkFramebufferCreateInfo frameBufferInfo = {};
+  //    frameBufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+  //    frameBufferInfo.renderPass = renderPass;
+  //    frameBufferInfo.attachmentCount =
+  //        static_cast<uint32_t>(attachments.size());
+  //    frameBufferInfo.pAttachments = attachments.data();
+  //    frameBufferInfo.width = swapChainExtent.width;
+  //    frameBufferInfo.height = swapChainExtent.height;
+  //    frameBufferInfo.layers = 1;
 
-      if (vkCreateFramebuffer(deviceManager->getDevice(), &frameBufferInfo,
-                              nullptr,
-                              &swapChainFramebuffers[i]) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create framebuffer!");
-      }
-    }
-  }
+  //    if (vkCreateFramebuffer(deviceManager->getLogicalDevice(),
+  //                            &frameBufferInfo, nullptr,
+  //                            &swapChainFramebuffers[i]) != VK_SUCCESS) {
+  //      throw std::runtime_error("Failed to create framebuffer!");
+  //    }
+  //  }
+  //}
 
   void createSyncObjects() {
     imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -611,11 +620,12 @@ class App {
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-      if (vkCreateSemaphore(deviceManager->getDevice(), &semaphoreInfo, nullptr,
+      if (vkCreateSemaphore(deviceManager->getLogicalDevice(), &semaphoreInfo,
+                            nullptr,
                             &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-          vkCreateSemaphore(deviceManager->getDevice(), &semaphoreInfo, nullptr,
-                            &renderFinishedSemaphores[i]) ||
-          vkCreateFence(deviceManager->getDevice(), &fenceInfo, nullptr,
+          vkCreateSemaphore(deviceManager->getLogicalDevice(), &semaphoreInfo,
+                            nullptr, &renderFinishedSemaphores[i]) ||
+          vkCreateFence(deviceManager->getLogicalDevice(), &fenceInfo, nullptr,
                         &inFlightFences[i]) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create semaphores!");
       }
@@ -733,13 +743,13 @@ class App {
     bufferInfo.usage = usage;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateBuffer(deviceManager->getDevice(), &bufferInfo, nullptr,
+    if (vkCreateBuffer(deviceManager->getLogicalDevice(), &bufferInfo, nullptr,
                        &buffer) != VK_SUCCESS) {
       throw std::runtime_error("Failed to create buffer!");
     }
 
     VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(deviceManager->getDevice(), buffer,
+    vkGetBufferMemoryRequirements(deviceManager->getLogicalDevice(), buffer,
                                   &memRequirements);
 
     VkMemoryAllocateInfo allocInfo = {};
@@ -748,12 +758,13 @@ class App {
     allocInfo.memoryTypeIndex =
         findMemoryType(memRequirements.memoryTypeBits, properties);
 
-    if (vkAllocateMemory(deviceManager->getDevice(), &allocInfo, nullptr,
+    if (vkAllocateMemory(deviceManager->getLogicalDevice(), &allocInfo, nullptr,
                          &bufferMemory) != VK_SUCCESS) {
       throw std::runtime_error("Failed to allocate buffer memory!");
     }
 
-    vkBindBufferMemory(deviceManager->getDevice(), buffer, bufferMemory, 0);
+    vkBindBufferMemory(deviceManager->getLogicalDevice(), buffer, bufferMemory,
+                       0);
   }
 
   void createImage(uint32_t width, uint32_t height, uint32_t mipLevels,
@@ -775,13 +786,13 @@ class App {
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateImage(deviceManager->getDevice(), &imageInfo, nullptr,
+    if (vkCreateImage(deviceManager->getLogicalDevice(), &imageInfo, nullptr,
                       &image) != VK_SUCCESS) {
       throw std::runtime_error("failed to create image!");
     }
 
     VkMemoryRequirements memRequirements;
-    vkGetImageMemoryRequirements(deviceManager->getDevice(), image,
+    vkGetImageMemoryRequirements(deviceManager->getLogicalDevice(), image,
                                  &memRequirements);
 
     VkMemoryAllocateInfo allocInfo = {};
@@ -790,12 +801,12 @@ class App {
     allocInfo.memoryTypeIndex =
         findMemoryType(memRequirements.memoryTypeBits, properties);
 
-    if (vkAllocateMemory(deviceManager->getDevice(), &allocInfo, nullptr,
+    if (vkAllocateMemory(deviceManager->getLogicalDevice(), &allocInfo, nullptr,
                          &imageMemory) != VK_SUCCESS) {
       throw std::runtime_error("failed to allocate image memory!");
     }
 
-    vkBindImageMemory(deviceManager->getDevice(), image, imageMemory, 0);
+    vkBindImageMemory(deviceManager->getLogicalDevice(), image, imageMemory, 0);
   }
 
   void createTextureImage() {
@@ -819,10 +830,10 @@ class App {
                  stagingBuffer, stagingBufferMemory);
 
     void* data;
-    vkMapMemory(deviceManager->getDevice(), stagingBufferMemory, 0, imageSize,
-                0, &data);
+    vkMapMemory(deviceManager->getLogicalDevice(), stagingBufferMemory, 0,
+                imageSize, 0, &data);
     memcpy(data, pixels, static_cast<size_t>(imageSize));
-    vkUnmapMemory(deviceManager->getDevice(), stagingBufferMemory);
+    vkUnmapMemory(deviceManager->getLogicalDevice(), stagingBufferMemory);
 
     stbi_image_free(pixels);
 
@@ -841,40 +852,19 @@ class App {
                       static_cast<uint32_t>(texWidth),
                       static_cast<uint32_t>(texHeight));
 
-    vkDestroyBuffer(deviceManager->getDevice(), stagingBuffer, nullptr);
-    vkFreeMemory(deviceManager->getDevice(), stagingBufferMemory, nullptr);
+    vkDestroyBuffer(deviceManager->getLogicalDevice(), stagingBuffer, nullptr);
+    vkFreeMemory(deviceManager->getLogicalDevice(), stagingBufferMemory,
+                 nullptr);
 
     // Create a mipmap from the loaded texture
     generateMipmaps(textureImage, VK_FORMAT_R8G8B8A8_UNORM, texWidth, texHeight,
                     mipLevels);
   }
 
-  VkImageView createImageView(VkImage image, VkFormat format,
-                              VkImageAspectFlags aspectFlags,
-                              uint32_t mipLevels) {
-    VkImageViewCreateInfo viewInfo = {};
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.image = image;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.format = format;
-    viewInfo.subresourceRange.aspectMask = aspectFlags;
-    viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = mipLevels;
-    viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = 1;
-
-    VkImageView imageView;
-    if (vkCreateImageView(deviceManager->getDevice(), &viewInfo, nullptr,
-                          &imageView) != VK_SUCCESS) {
-      throw std::runtime_error("Failed to create texture image view!");
-    }
-
-    return imageView;
-  }
-
   void createTextureImageView() {
-    textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_UNORM,
-                                       VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+    textureImageView = swapChain->createImageView(
+        deviceManager->getLogicalDevice(), textureImage,
+        VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
   }
 
   void createTextureSampler() {
@@ -896,8 +886,8 @@ class App {
     samplerInfo.minLod = 0.0f;
     samplerInfo.maxLod = static_cast<float>(mipLevels);
 
-    if (vkCreateSampler(deviceManager->getDevice(), &samplerInfo, nullptr,
-                        &textureSampler) != VK_SUCCESS) {
+    if (vkCreateSampler(deviceManager->getLogicalDevice(), &samplerInfo,
+                        nullptr, &textureSampler) != VK_SUCCESS) {
       throw std::runtime_error("Failed to create texture sampler!");
     }
   }
@@ -914,10 +904,10 @@ class App {
                  stagingBuffer, stagingBufferMemory);
 
     void* data;
-    vkMapMemory(deviceManager->getDevice(), stagingBufferMemory, 0, bufferSize,
-                0, &data);
+    vkMapMemory(deviceManager->getLogicalDevice(), stagingBufferMemory, 0,
+                bufferSize, 0, &data);
     memcpy(data, vertices.data(), static_cast<size_t>(bufferSize));
-    vkUnmapMemory(deviceManager->getDevice(), stagingBufferMemory);
+    vkUnmapMemory(deviceManager->getLogicalDevice(), stagingBufferMemory);
 
     createBuffer(
         bufferSize,
@@ -926,8 +916,9 @@ class App {
 
     copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
 
-    vkDestroyBuffer(deviceManager->getDevice(), stagingBuffer, nullptr);
-    vkFreeMemory(deviceManager->getDevice(), stagingBufferMemory, nullptr);
+    vkDestroyBuffer(deviceManager->getLogicalDevice(), stagingBuffer, nullptr);
+    vkFreeMemory(deviceManager->getLogicalDevice(), stagingBufferMemory,
+                 nullptr);
   }
 
   // TODO Look into packing vertex data and vertex indices into one
@@ -944,10 +935,10 @@ class App {
                  stagingBuffer, stagingBufferMemory);
 
     void* data;
-    vkMapMemory(deviceManager->getDevice(), stagingBufferMemory, 0, bufferSize,
-                0, &data);
+    vkMapMemory(deviceManager->getLogicalDevice(), stagingBufferMemory, 0,
+                bufferSize, 0, &data);
     memcpy(data, indices.data(), static_cast<size_t>(bufferSize));
-    vkUnmapMemory(deviceManager->getDevice(), stagingBufferMemory);
+    vkUnmapMemory(deviceManager->getLogicalDevice(), stagingBufferMemory);
 
     createBuffer(
         bufferSize,
@@ -956,8 +947,9 @@ class App {
 
     copyBuffer(stagingBuffer, indexBuffer, bufferSize);
 
-    vkDestroyBuffer(deviceManager->getDevice(), stagingBuffer, nullptr);
-    vkFreeMemory(deviceManager->getDevice(), stagingBufferMemory, nullptr);
+    vkDestroyBuffer(deviceManager->getLogicalDevice(), stagingBuffer, nullptr);
+    vkFreeMemory(deviceManager->getLogicalDevice(), stagingBufferMemory,
+                 nullptr);
   }
 
   uint32_t findMemoryType(uint32_t typeFilter,
@@ -978,10 +970,11 @@ class App {
     VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
     // Our strategy is to create buffers for each swapchain image
-    uniformBuffers.resize(swapChainImages.size());
-    uniformBuffersMemory.resize(swapChainImages.size());
+    auto swapChainImageSize = swapChain->getImageSize();
+    uniformBuffers.resize(swapChainImageSize);
+    uniformBuffersMemory.resize(swapChainImageSize);
 
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
+    for (size_t i = 0; i < swapChainImageSize; i++) {
       createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -999,6 +992,7 @@ class App {
                      currentTime - startTime)
                      .count();
 
+    auto swapChainExtent = swapChain->getExtent();
     UniformBufferObject ubo{};
     ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f),
                             glm::vec3(0.0f, 0.0f, 1.0f));
@@ -1014,10 +1008,10 @@ class App {
     ubo.proj[1][1] *= -1;
 
     void* data;
-    vkMapMemory(deviceManager->getDevice(), uniformBuffersMemory[currentImage],
-                0, sizeof(ubo), 0, &data);
+    vkMapMemory(deviceManager->getLogicalDevice(),
+                uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
     memcpy(data, &ubo, sizeof(ubo));
-    vkUnmapMemory(deviceManager->getDevice(),
+    vkUnmapMemory(deviceManager->getLogicalDevice(),
                   uniformBuffersMemory[currentImage]);
   }
 
@@ -1026,40 +1020,40 @@ class App {
     std::array<VkDescriptorPoolSize, 2> poolSizes = {};
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[0].descriptorCount =
-        static_cast<uint32_t>(swapChainImages.size());
+        static_cast<uint32_t>(swapChain->getImageSize());
     poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     poolSizes[1].descriptorCount =
-        static_cast<uint32_t>(swapChainImages.size());
+        static_cast<uint32_t>(swapChain->getImageSize());
 
     VkDescriptorPoolCreateInfo poolInfo = {};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = static_cast<uint32_t>(swapChainImages.size());
+    poolInfo.maxSets = static_cast<uint32_t>(swapChain->getImageSize());
 
-    if (vkCreateDescriptorPool(deviceManager->getDevice(), &poolInfo, nullptr,
-                               &descriptorPool) != VK_SUCCESS) {
+    if (vkCreateDescriptorPool(deviceManager->getLogicalDevice(), &poolInfo,
+                               nullptr, &descriptorPool) != VK_SUCCESS) {
       throw std::runtime_error("Failed to create descriptor pool!");
     }
   }
 
   void createDescriptorSets() {
-    std::vector<VkDescriptorSetLayout> layouts(swapChainImages.size(),
+    std::vector<VkDescriptorSetLayout> layouts(swapChain->getImageSize(),
                                                descriptorSetLayout);
     VkDescriptorSetAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = descriptorPool;
     allocInfo.descriptorSetCount =
-        static_cast<uint32_t>(swapChainImages.size());
+        static_cast<uint32_t>(swapChain->getImageSize());
     allocInfo.pSetLayouts = layouts.data();
 
-    descriptorSets.resize(swapChainImages.size());
-    if (vkAllocateDescriptorSets(deviceManager->getDevice(), &allocInfo,
+    descriptorSets.resize(swapChain->getImageSize());
+    if (vkAllocateDescriptorSets(deviceManager->getLogicalDevice(), &allocInfo,
                                  descriptorSets.data()) != VK_SUCCESS) {
       throw std::runtime_error("Failed to allocate descriptor sets!");
     }
 
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
+    for (size_t i = 0; i < swapChain->getImageSize(); i++) {
       VkDescriptorBufferInfo bufferInfo = {};
       bufferInfo.buffer = uniformBuffers[i];
       bufferInfo.offset = 0;
@@ -1088,7 +1082,7 @@ class App {
       descriptorWrites[1].descriptorCount = 1;
       descriptorWrites[1].pImageInfo = &imageInfo;
 
-      vkUpdateDescriptorSets(deviceManager->getDevice(),
+      vkUpdateDescriptorSets(deviceManager->getLogicalDevice(),
                              static_cast<uint32_t>(descriptorWrites.size()),
                              descriptorWrites.data(), 0, nullptr);
     }
@@ -1114,12 +1108,11 @@ class App {
       glfwWaitEvents();
     }
 
-    vkDeviceWaitIdle(deviceManager->getDevice());
+    vkDeviceWaitIdle(deviceManager->getLogicalDevice());
 
     cleanupSwapChain();
 
     createSwapChain();
-    createImageViews();
     createRenderPass();
     createGraphicsPipeline();
     createDepthResources();
@@ -1130,82 +1123,17 @@ class App {
     createCommandBuffers();
   }
 
-  void createLogicalDevice() {}
-
   void createSwapChain() {
-    SwapChainSupportDetails swapChainSupport =
-        deviceManager->querySwapChainSupport(surface);
-
-    VkSurfaceFormatKHR surfaceFormat =
-        chooseSwapSurfaceFormat(swapChainSupport.formats);
-    VkPresentModeKHR presentMode =
-        chooseSwapPresentMode(swapChainSupport.presentModes);
-    VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
-
-    uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-    if (swapChainSupport.capabilities.maxImageCount > 0 &&
-        imageCount > swapChainSupport.capabilities.maxImageCount) {
-      imageCount = swapChainSupport.capabilities.maxImageCount;
-    }
-
-    VkSwapchainCreateInfoKHR createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    createInfo.surface = surface;
-
-    createInfo.minImageCount = imageCount;
-    createInfo.imageFormat = surfaceFormat.format;
-    createInfo.imageColorSpace = surfaceFormat.colorSpace;
-    createInfo.imageExtent = extent;
-    createInfo.imageArrayLayers = 1;
-    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-    QueueFamilyIndices indices = deviceManager->findQueueFamilies(surface);
-    uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(),
-                                     indices.presentFamily.value()};
-
-    if (indices.graphicsFamily != indices.presentFamily) {
-      createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-      createInfo.queueFamilyIndexCount = 2;
-      createInfo.pQueueFamilyIndices = queueFamilyIndices;
-    } else {
-      createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    }
-
-    createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
-    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    createInfo.presentMode = presentMode;
-    createInfo.clipped = VK_TRUE;
-
-    createInfo.oldSwapchain = VK_NULL_HANDLE;
-
-    if (vkCreateSwapchainKHR(deviceManager->getDevice(), &createInfo, nullptr,
-                             &swapChain) != VK_SUCCESS) {
-      throw std::runtime_error("Failed to create swap chain!");
-    }
-
-    vkGetSwapchainImagesKHR(deviceManager->getDevice(), swapChain, &imageCount,
-                            nullptr);
-    swapChainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(deviceManager->getDevice(), swapChain, &imageCount,
-                            swapChainImages.data());
-
-    swapChainImageFormat = surfaceFormat.format;
-    swapChainExtent = extent;
-  }
-
-  void createImageViews() {
-    swapChainImageViews.resize(swapChainImages.size());
-
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
-      swapChainImageViews[i] =
-          createImageView(swapChainImages[i], swapChainImageFormat,
-                          VK_IMAGE_ASPECT_COLOR_BIT, 1);
-    }
+    // This also constructs the necessary VkImageViews
+    swapChain = std::make_unique<Swapchain>(
+        deviceManager->findQueueFamilies(surface),
+        deviceManager->getSwapChainSupport(), deviceManager->getLogicalDevice(),
+        surface, window);
   }
 
   void createRenderPass() {
     VkAttachmentDescription colorAttachment = {};
-    colorAttachment.format = swapChainImageFormat;
+    colorAttachment.format = swapChain->getImageFormat();
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     // Clear the framebuffer before and after rendering
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -1267,8 +1195,8 @@ class App {
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    if (vkCreateRenderPass(deviceManager->getDevice(), &renderPassInfo, nullptr,
-                           &renderPass) != VK_SUCCESS) {
+    if (vkCreateRenderPass(deviceManager->getLogicalDevice(), &renderPassInfo,
+                           nullptr, &renderPass) != VK_SUCCESS) {
       throw std::runtime_error("Failed to create render pass!");
     }
   }
@@ -1328,6 +1256,7 @@ class App {
     viewport.y = 0.0f;
     // It's suggested to not use the WIDTH and HEIGHT constants
     // and instead opt to retrieve these values from the swap chain
+    auto swapChainExtent = swapChain->getExtent();
     viewport.width = static_cast<uint32_t>(swapChainExtent.width);
     viewport.height = static_cast<uint32_t>(swapChainExtent.height);
     viewport.minDepth = 0.0f;
@@ -1411,8 +1340,9 @@ class App {
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
-    if (vkCreatePipelineLayout(deviceManager->getDevice(), &pipelineLayoutInfo,
-                               nullptr, &pipelineLayout) != VK_SUCCESS) {
+    if (vkCreatePipelineLayout(deviceManager->getLogicalDevice(),
+                               &pipelineLayoutInfo, nullptr,
+                               &pipelineLayout) != VK_SUCCESS) {
       throw std::runtime_error("Failed to create pipeline layout!");
     }
 
@@ -1433,16 +1363,16 @@ class App {
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-    if (vkCreateGraphicsPipelines(deviceManager->getDevice(), VK_NULL_HANDLE, 1,
-                                  &pipelineInfo, nullptr,
+    if (vkCreateGraphicsPipelines(deviceManager->getLogicalDevice(),
+                                  VK_NULL_HANDLE, 1, &pipelineInfo, nullptr,
                                   &graphicsPipeline) != VK_SUCCESS) {
       throw std::runtime_error("Failed to create graphics pipeline!");
     }
 
     // Destroy shader modules once they have been initialized
-    vkDestroyShaderModule(deviceManager->getDevice(), fragShaderModule,
+    vkDestroyShaderModule(deviceManager->getLogicalDevice(), fragShaderModule,
                           nullptr);
-    vkDestroyShaderModule(deviceManager->getDevice(), vertShaderModule,
+    vkDestroyShaderModule(deviceManager->getLogicalDevice(), vertShaderModule,
                           nullptr);
   }
 
@@ -1453,62 +1383,12 @@ class App {
     createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
     VkShaderModule shaderModule;
-    if (vkCreateShaderModule(deviceManager->getDevice(), &createInfo, nullptr,
-                             &shaderModule) != VK_SUCCESS) {
+    if (vkCreateShaderModule(deviceManager->getLogicalDevice(), &createInfo,
+                             nullptr, &shaderModule) != VK_SUCCESS) {
       throw std::runtime_error("Failed to create shader module!");
     }
 
     return shaderModule;
-  }
-
-  VkSurfaceFormatKHR chooseSwapSurfaceFormat(
-      const std::vector<VkSurfaceFormatKHR>& availableFormats) {
-    for (const auto& availableFormat : availableFormats) {
-      if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
-          availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-        return availableFormat;
-      }
-    }
-
-    return availableFormats[0];
-  }
-
-  VkPresentModeKHR chooseSwapPresentMode(
-      const std::vector<VkPresentModeKHR>& availablePresentModes) {
-    VkPresentModeKHR bestMode = VK_PRESENT_MODE_FIFO_KHR;
-
-    for (const auto& availablePresentMode : availablePresentModes) {
-      if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-        return availablePresentMode;
-      } else if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-        bestMode = availablePresentMode;
-      }
-    }
-
-    return bestMode;
-  }
-
-  VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) {
-    // TODO Fix this from the tutorial 'Swap chain recreation'
-    if (capabilities.currentExtent.width !=
-        std::numeric_limits<uint32_t>::max()) {
-      return capabilities.currentExtent;
-    } else {
-      int width, height;
-      glfwGetFramebufferSize(window, &width, &height);
-
-      VkExtent2D actualExtent = {static_cast<uint32_t>(width),
-                                 static_cast<uint32_t>(height)};
-
-      actualExtent.width = std::max(
-          capabilities.minImageExtent.width,
-          std::min(capabilities.maxImageExtent.width, actualExtent.width));
-      actualExtent.height = std::max(
-          capabilities.minImageExtent.height,
-          std::min(capabilities.maxImageExtent.height, actualExtent.height));
-
-      return actualExtent;
-    }
   }
 
   void loadModel() {

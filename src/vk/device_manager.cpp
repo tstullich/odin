@@ -76,13 +76,13 @@ void odin::DeviceManager::createLogicalDevice(const Instance& instance,
     createInfo.enabledLayerCount = 0;
   }
 
-  if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) !=
+  if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &logicalDevice) !=
       VK_SUCCESS) {
     throw std::runtime_error("Failed to create logical device!");
   }
 
-  vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
-  vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+  vkGetDeviceQueue(logicalDevice, indices.graphicsFamily.value(), 0, &graphicsQueue);
+  vkGetDeviceQueue(logicalDevice, indices.presentFamily.value(), 0, &presentQueue);
 }
 
 // Helper function to allow access to queue family indices without having
@@ -133,7 +133,7 @@ odin::QueueFamilyIndices odin::DeviceManager::findQueueFamilies(
   return indices;
 }
 
-const VkDevice odin::DeviceManager::getDevice() const { return device; }
+const VkDevice odin::DeviceManager::getLogicalDevice() const { return logicalDevice; }
 
 const VkQueue odin::DeviceManager::getGraphicsQueue() const {
   return graphicsQueue;
@@ -145,6 +145,12 @@ const VkPhysicalDevice odin::DeviceManager::getPhysicalDevice() const {
 
 const VkQueue odin::DeviceManager::getPresentationQueue() const {
   return presentQueue;
+}
+
+odin::SwapChainSupportDetails odin::DeviceManager::getSwapChainSupport() const {
+  // TODO Implement mechanism for proper caching in case devices are swapped for
+  // an instance
+  return swapChainSupportDetails;
 }
 
 bool odin::DeviceManager::isDeviceSuitable(VkPhysicalDevice physicalDevice,
@@ -191,13 +197,6 @@ void odin::DeviceManager::pickPhysicalDevice(const Instance& instance,
   if (physicalDevice == VK_NULL_HANDLE) {
     throw std::runtime_error("Failed to find a suitable GPU!");
   }
-}
-
-odin::SwapChainSupportDetails odin::DeviceManager::querySwapChainSupport(
-    VkSurfaceKHR surface) {
-  // TODO Implement mechanism for proper caching in case devices are swapped for
-  // an instance
-  return swapChainSupportDetails;
 }
 
 odin::SwapChainSupportDetails odin::DeviceManager::querySwapChainSupport(
