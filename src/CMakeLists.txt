@@ -4,6 +4,8 @@ set(SOURCE_FILES
     vk/instance.cpp
     vk/device_manager.cpp
     vk/swapchain.cpp
+    vk/render_pass.cpp
+    vk/descriptor_set.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})

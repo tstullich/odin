@@ -25,8 +25,10 @@
 #include <unordered_map>
 #include <vector>
 
+#include "vk/descriptor_set.hpp"
 #include "vk/device_manager.hpp"
 #include "vk/instance.hpp"
+#include "vk/render_pass.hpp"
 #include "vk/swapchain.hpp"
 
 const int WIDTH = 800;
@@ -123,8 +125,10 @@ class App {
 
   std::unique_ptr<Swapchain> swapChain;
 
-  VkRenderPass renderPass;
-  VkDescriptorSetLayout descriptorSetLayout;
+  std::unique_ptr<RenderPass> renderPass;
+
+  std::unique_ptr<DescriptorSet> descriptorSetLayout;
+
   VkPipelineLayout pipelineLayout;
   VkPipeline graphicsPipeline;
 
@@ -181,7 +185,6 @@ class App {
     createSurface();
     createDeviceManager();
     createSwapChain();
-    createImageViews();
     createRenderPass();
     createDescriptorSetLayout();
     createGraphicsPipeline();
@@ -434,7 +437,7 @@ class App {
 
       VkRenderPassBeginInfo renderPassInfo = {};
       renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-      renderPassInfo.renderPass = renderPass;
+      renderPassInfo.renderPass = renderPass->getRenderPass();
       renderPassInfo.framebuffer = swapChain->getFrameBuffer(i);
       renderPassInfo.renderArea.offset = {0, 0};
       renderPassInfo.renderArea.extent = swapChain->getExtent();
@@ -542,45 +545,20 @@ class App {
         VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
 
-    depthImageView =
-        swapChain->createImageView(deviceManager->getLogicalDevice(), depthImage,
-                        depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+    depthImageView = swapChain->createImageView(
+        deviceManager->getLogicalDevice(), depthImage, depthFormat,
+        VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
     transitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
   }
 
   void createDescriptorSetLayout() {
-    VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-    uboLayoutBinding.binding = 0;
-    uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboLayoutBinding.pImmutableSamplers = nullptr;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-    VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-    samplerLayoutBinding.binding = 1;
-    samplerLayoutBinding.descriptorCount = 1;
-    samplerLayoutBinding.descriptorType =
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    samplerLayoutBinding.pImmutableSamplers = nullptr;
-    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-    std::array<VkDescriptorSetLayoutBinding, 2> bindings = {
-        uboLayoutBinding, samplerLayoutBinding};
-    VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-    layoutInfo.pBindings = bindings.data();
-
-    if (vkCreateDescriptorSetLayout(deviceManager->getLogicalDevice(),
-                                    &layoutInfo, nullptr,
-                                    &descriptorSetLayout) != VK_SUCCESS) {
-      throw std::runtime_error("Failed to create descriptor set layout!");
-    }
+    descriptorSetLayout =
+        std::make_unique<DescriptorSet>(deviceManager->getLogicalDevice());
   }
 
-  //void createFrameBuffers() {
+  // void createFrameBuffers() {
   //  // Buffer size needs to match image views
   //  swapChainFramebuffers.resize(swapChainImageViews.size());
 
@@ -1039,7 +1017,7 @@ class App {
 
   void createDescriptorSets() {
     std::vector<VkDescriptorSetLayout> layouts(swapChain->getImageSize(),
-                                               descriptorSetLayout);
+                                               descriptorSetLayout->getDescriptorSetLayout());
     VkDescriptorSetAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = descriptorPool;
@@ -1132,73 +1110,9 @@ class App {
   }
 
   void createRenderPass() {
-    VkAttachmentDescription colorAttachment = {};
-    colorAttachment.format = swapChain->getImageFormat();
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    // Clear the framebuffer before and after rendering
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    // Store color data in memory for future read operations
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    // Configure if stencil data should be stored
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentDescription depthAttachment = {};
-    depthAttachment.format = findDepthFormat();
-    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depthAttachment.finalLayout =
-        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    // Configure subpasses. For now we just need the two for rendering and depth
-    // testing
-    VkAttachmentReference colorAttachmentRef = {};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference depthAttachmentRef = {};
-    depthAttachmentRef.attachment = 1;
-    depthAttachmentRef.layout =
-        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpass = {};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    // This can be directly referenced in our fragment shader
-    subpass.pColorAttachments = &colorAttachmentRef;
-    subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-    // Add a dependency for signaling when we need to start our subpass
-    VkSubpassDependency dependency = {};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
-                               VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    std::array<VkAttachmentDescription, 2> attachments = {colorAttachment,
-                                                          depthAttachment};
-    VkRenderPassCreateInfo renderPassInfo = {};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-    renderPassInfo.pAttachments = attachments.data();
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependency;
-
-    if (vkCreateRenderPass(deviceManager->getLogicalDevice(), &renderPassInfo,
-                           nullptr, &renderPass) != VK_SUCCESS) {
-      throw std::runtime_error("Failed to create render pass!");
-    }
+    renderPass = std::make_unique<RenderPass>(deviceManager->getLogicalDevice(),
+                                              swapChain->getImageFormat(),
+                                              findDepthFormat());
   }
 
   void createGraphicsPipeline() {
@@ -1338,7 +1252,7 @@ class App {
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout->getDescriptorSetLayout();
 
     if (vkCreatePipelineLayout(deviceManager->getLogicalDevice(),
                                &pipelineLayoutInfo, nullptr,
@@ -1359,7 +1273,7 @@ class App {
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDepthStencilState = &depthStencil;
     pipelineInfo.layout = pipelineLayout;
-    pipelineInfo.renderPass = renderPass;
+    pipelineInfo.renderPass = renderPass->getRenderPass();
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
