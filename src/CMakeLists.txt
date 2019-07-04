@@ -6,6 +6,8 @@ set(SOURCE_FILES
     vk/swapchain.cpp
     vk/render_pass.cpp
     vk/descriptor_set.cpp
+    vk/pipeline.cpp
+    vk/shader_module.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
