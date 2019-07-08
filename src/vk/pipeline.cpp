@@ -2,15 +2,19 @@
 
 odin::Pipeline::Pipeline(const VkDevice& logicalDevice,
                          const Swapchain& swapChain,
-                         const RenderPass& renderPass) {
-  createPipeline(logicalDevice, swapChain, renderPass);
+                         const RenderPass& renderPass,
+                         const DescriptorSet& descriptorSet) {
+  createPipeline(logicalDevice, swapChain, renderPass, descriptorSet);
 }
 
-odin::Pipeline::~Pipeline() {}
+odin::Pipeline::~Pipeline() {
+  std::cout << "MUST IMPLEMENT PIPELINE DESTRUCTOR!" << std::endl;
+}
 
 void odin::Pipeline::createPipeline(const VkDevice& logicalDevice,
                                     const Swapchain& swapChain,
-                                    const RenderPass& renderPass) {
+                                    const RenderPass& renderPass,
+                                    const DescriptorSet& descriptorSet) {
   // Load shaders from file
   auto vertShaderCode = FileReader::readFile("shaders/vert.spv");
   auto fragShaderCode = FileReader::readFile("shaders/frag.spv");
@@ -146,8 +150,7 @@ void odin::Pipeline::createPipeline(const VkDevice& logicalDevice,
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 1;
-  pipelineLayoutInfo.pSetLayouts =
-      &descriptorSetLayout->getDescriptorSetLayout();
+  pipelineLayoutInfo.pSetLayouts = descriptorSet.getDescriptorSetLayout();
 
   if (vkCreatePipelineLayout(logicalDevice, &pipelineLayoutInfo, nullptr,
                              &pipelineLayout) != VK_SUCCESS) {
@@ -175,4 +178,12 @@ void odin::Pipeline::createPipeline(const VkDevice& logicalDevice,
                                 nullptr, &graphicsPipeline) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create graphics pipeline!");
   }
+}
+
+const VkPipeline odin::Pipeline::getGraphicsPipeline() const {
+  return graphicsPipeline;
+}
+
+const VkPipelineLayout odin::Pipeline::getPipelineLayout() const {
+  return pipelineLayout;
 }

@@ -36,6 +36,6 @@ void odin::DescriptorSet::createDescriptorSetLayout(const VkDevice& logicalDevic
   }
 }
 
-const VkDescriptorSetLayout odin::DescriptorSet::getDescriptorSetLayout() const {
-    return descriptorSetLayout;
+const VkDescriptorSetLayout* odin::DescriptorSet::getDescriptorSetLayout() const {
+    return &descriptorSetLayout;
 }

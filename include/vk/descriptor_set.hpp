@@ -13,7 +13,7 @@ class DescriptorSet {
   DescriptorSet(const VkDevice& logicalDevice);
   ~DescriptorSet();
 
-  const VkDescriptorSetLayout getDescriptorSetLayout() const;
+  const VkDescriptorSetLayout* getDescriptorSetLayout() const;
 
  private:
   void createDescriptorSetLayout(const VkDevice& logicalDevice);
@@ -21,5 +21,4 @@ class DescriptorSet {
   VkDescriptorSetLayout descriptorSetLayout;
 };
 }  // namespace odin
-
 #endif  // ODIN_DESCRIPTOR_SET_HPP

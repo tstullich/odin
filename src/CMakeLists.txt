@@ -8,6 +8,7 @@ set(SOURCE_FILES
     vk/descriptor_set.cpp
     vk/pipeline.cpp
     vk/shader_module.cpp
+    vk/command_pool.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})

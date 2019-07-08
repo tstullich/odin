@@ -24,6 +24,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "vk/command_pool.hpp"
 #include "vk/descriptor_set.hpp"
 #include "vk/device_manager.hpp"
 #include "vk/instance.hpp"
@@ -131,8 +132,7 @@ class App {
 
   std::unique_ptr<Pipeline> graphicsPipeline;
 
-  VkCommandPool commandPool;
-  std::vector<VkCommandBuffer> commandBuffers;
+  std::unique_ptr<CommandPool> commandPool;
 
   std::vector<VkSemaphore> imageAvailableSemaphores;
   std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -249,7 +249,7 @@ class App {
     submitInfo.pWaitDstStageMask = waitStages;
 
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
+    submitInfo.pCommandBuffers = commandPool->getCommandBuffer(imageIndex);
 
     VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
     submitInfo.signalSemaphoreCount = 1;
@@ -292,42 +292,48 @@ class App {
   }
 
   void cleanupSwapChain() {
-    vkDestroyImageView(deviceManager->getLogicalDevice(), depthImageView,
-                       nullptr);
-    vkDestroyImage(deviceManager->getLogicalDevice(), depthImage, nullptr);
-    vkFreeMemory(deviceManager->getLogicalDevice(), depthImageMemory, nullptr);
+    //  vkDestroyImageView(deviceManager->getLogicalDevice(), depthImageView,
+    //                     nullptr);
+    //  vkDestroyImage(deviceManager->getLogicalDevice(), depthImage, nullptr);
+    //  vkFreeMemory(deviceManager->getLogicalDevice(), depthImageMemory,
+    //  nullptr);
 
-    for (auto framebuffer : swapChainFramebuffers) {
-      vkDestroyFramebuffer(deviceManager->getLogicalDevice(), framebuffer,
-                           nullptr);
-    }
+    //  for (auto framebuffer : swapChainFramebuffers) {
+    //    vkDestroyFramebuffer(deviceManager->getLogicalDevice(), framebuffer,
+    //                         nullptr);
+    //  }
 
-    vkFreeCommandBuffers(deviceManager->getLogicalDevice(), commandPool,
-                         static_cast<uint32_t>(commandBuffers.size()),
-                         commandBuffers.data());
+    //  vkFreeCommandBuffers(deviceManager->getLogicalDevice(), commandPool,
+    //                       static_cast<uint32_t>(commandBuffers.size()),
+    //                       commandBuffers.data());
 
-    vkDestroyPipeline(deviceManager->getLogicalDevice(), graphicsPipeline,
-                      nullptr);
-    vkDestroyPipelineLayout(deviceManager->getLogicalDevice(), pipelineLayout,
-                            nullptr);
-    vkDestroyRenderPass(deviceManager->getLogicalDevice(), renderPass, nullptr);
+    //  vkDestroyPipeline(deviceManager->getLogicalDevice(), graphicsPipeline,
+    //                    nullptr);
+    //  vkDestroyPipelineLayout(deviceManager->getLogicalDevice(),
+    //  pipelineLayout,
+    //                          nullptr);
+    //  vkDestroyRenderPass(deviceManager->getLogicalDevice(), renderPass,
+    //  nullptr);
 
-    for (auto imageView : swapChainImageViews) {
-      vkDestroyImageView(deviceManager->getLogicalDevice(), imageView, nullptr);
-    }
+    //  for (auto imageView : swapChainImageViews) {
+    //    vkDestroyImageView(deviceManager->getLogicalDevice(), imageView,
+    //    nullptr);
+    //  }
 
-    vkDestroySwapchainKHR(deviceManager->getLogicalDevice(), swapChain,
-                          nullptr);
+    //  vkDestroySwapchainKHR(deviceManager->getLogicalDevice(), swapChain,
+    //                        nullptr);
 
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
-      vkDestroyBuffer(deviceManager->getLogicalDevice(), uniformBuffers[i],
-                      nullptr);
-      vkFreeMemory(deviceManager->getLogicalDevice(), uniformBuffersMemory[i],
-                   nullptr);
-    }
+    //  for (size_t i = 0; i < swapChainImages.size(); i++) {
+    //    vkDestroyBuffer(deviceManager->getLogicalDevice(), uniformBuffers[i],
+    //                    nullptr);
+    //    vkFreeMemory(deviceManager->getLogicalDevice(),
+    //    uniformBuffersMemory[i],
+    //                 nullptr);
+    //  }
 
-    vkDestroyDescriptorPool(deviceManager->getLogicalDevice(), descriptorPool,
-                            nullptr);
+    //  vkDestroyDescriptorPool(deviceManager->getLogicalDevice(),
+    //  descriptorPool,
+    //                          nullptr);
   }
 
   void cleanup() {
@@ -410,95 +416,13 @@ class App {
   }
 
   void createCommandBuffers() {
-    commandBuffers.resize(swapChain->getFrameBufferSizes());
-
-    VkCommandBufferAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
-
-    if (vkAllocateCommandBuffers(deviceManager->getLogicalDevice(), &allocInfo,
-                                 commandBuffers.data()) != VK_SUCCESS) {
-      throw std::runtime_error("Failed to allocate command buffers!");
-    }
-
-    // Record buffer commands
-    for (size_t i = 0; i < commandBuffers.size(); i++) {
-      VkCommandBufferBeginInfo beginInfo = {};
-      beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-      beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-      beginInfo.pInheritanceInfo = nullptr;
-
-      if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to begin recording command buffer!");
-      }
-
-      VkRenderPassBeginInfo renderPassInfo = {};
-      renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-      renderPassInfo.renderPass = renderPass->getRenderPass();
-      renderPassInfo.framebuffer = swapChain->getFrameBuffer(i);
-      renderPassInfo.renderArea.offset = {0, 0};
-      renderPassInfo.renderArea.extent = swapChain->getExtent();
-
-      // Because we have multiple attachments with VK_ATTACHMENT_LOAD_OP_CLEAR
-      std::array<VkClearValue, 2> clearValues = {};
-      clearValues[0] = {0.0f, 0.0f, 0.0f, 1.0f};
-      clearValues[1].depthStencil = {1.0f, 0};
-
-      renderPassInfo.clearValueCount =
-          static_cast<uint32_t>(clearValues.size());
-      renderPassInfo.pClearValues = clearValues.data();
-
-      // Specify render pass commands
-      vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo,
-                           VK_SUBPASS_CONTENTS_INLINE);
-
-      // Bind pipeline to command buffers
-      vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        graphicsPipeline);
-
-      // Bind the vertex buffer to the pipeline
-      VkBuffer vertexBuffers[] = {vertexBuffer};
-      VkDeviceSize offsets[] = {0};
-      vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-
-      // Bind the vertex indices buffer to the pipeline
-      vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0,
-                           VK_INDEX_TYPE_UINT32);
-
-      // Bind descriptor sets to swap chain images
-      vkCmdBindDescriptorSets(commandBuffers[i],
-                              VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
-                              0, 1, &descriptorSets[i], 0, nullptr);
-
-      // Draw the vertices using the indices
-      vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()),
-                       1, 0, 0, 0);
-
-      // End render pass
-      vkCmdEndRenderPass(commandBuffers[i]);
-
-      if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to record command buffer");
-      }
-    }
+    commandPool->createCommandBuffers(deviceManager->getLogicalDevice(),
+                                      *renderPass,
+                                      *graphicsPipeline,
+                                      *swapChain);
   }
 
-  void createCommandPool() {
-    QueueFamilyIndices queueFamilyIndices =
-        deviceManager->findQueueFamilies(surface);
-
-    VkCommandPoolCreateInfo poolInfo = {};
-    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-    poolInfo.flags = 0;
-
-    if (vkCreateCommandPool(deviceManager->getLogicalDevice(), &poolInfo,
-                            nullptr, &commandPool) != VK_SUCCESS) {
-      throw std::runtime_error("Failed to create command pool");
-    }
-  }
+  void createCommandPool() { commandPool = std::make_unique<CommandPool>(); }
 
   VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates,
                                VkImageTiling tiling,
@@ -1015,8 +939,9 @@ class App {
   }
 
   void createDescriptorSets() {
-    std::vector<VkDescriptorSetLayout> layouts(swapChain->getImageSize(),
-                                               descriptorSetLayout->getDescriptorSetLayout());
+    std::vector<VkDescriptorSetLayout> layouts(
+        swapChain->getImageSize(),
+        descriptorSetLayout->getDescriptorSetLayout());
     VkDescriptorSetAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = descriptorPool;
@@ -1115,7 +1040,8 @@ class App {
   }
 
   void createGraphicsPipeline() {
-    graphicsPipeline = std::make_unique<Pipeline>(deviceManager->getLogicalDevice(), swapChain, renderPass);
+    graphicsPipeline = std::make_unique<Pipeline>(
+        deviceManager->getLogicalDevice(), swapChain, renderPass);
   }
 
   void loadModel() {
