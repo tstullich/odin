@@ -24,8 +24,13 @@ class VertexBuffer : Buffer {
 
   ~VertexBuffer();
 
+  const VkBuffer getBuffer() const;
+
+  const size_t getVertexCount() const;
+
  private:
   VkDeviceMemory vertexBufferMemory;
+  size_t numVertices;
 };
 }  // namespace odin
 #endif  // ODIN_VERTEX_BUFFER_HPP

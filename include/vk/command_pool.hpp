@@ -10,9 +10,11 @@
 #include <vector>
 
 #include "vk/device_manager.hpp"
+#include "vk/index_buffer.hpp"
 #include "vk/pipeline.hpp"
 #include "vk/render_pass.hpp"
 #include "vk/swapchain.hpp"
+#include "vk/vertex_buffer.hpp"
 
 namespace odin {
 class CommandPool {
@@ -22,15 +24,17 @@ class CommandPool {
 
   ~CommandPool();
 
-  VkCommandBuffer beginSingleTimeCommands(const VkDevice& logicalDevice);
+  const VkCommandBuffer beginSingleTimeCommands(const VkDevice& logicalDevice) const;
 
   void createCommandBuffers(const VkDevice& logicalDevice,
                             const RenderPass& renderPass,
                             const Pipeline& graphicsPipeline,
-                            const Swapchain& swapChain);
+                            const Swapchain& swapChain,
+                            const IndexBuffer& indexBuffer,
+                            const VertexBuffer& vertexBuffer);
 
   void endSingleTimeCommands(const DeviceManager& deviceManager,
-                             VkCommandBuffer commandBuffer);
+                             VkCommandBuffer commandBuffer) const;
 
   const VkCommandBuffer* getCommandBuffer(uint32_t bufferIndex) const;
 

@@ -4,7 +4,8 @@ odin::VertexBuffer::VertexBuffer(const DeviceManager& deviceManager,
                                  const CommandPool& commandPool,
                                  const std::vector<Vertex>& vertices) {
   // Map buffer to CPU memory
-  VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+  numVertices = vertices.size();
+  VkDeviceSize bufferSize = sizeof(vertices[0]) * numVertices;
   VkBuffer stagingBuffer;
   VkDeviceMemory stagingBufferMemory;
   createBuffer(deviceManager.getPhysicalDevice(),
@@ -37,4 +38,12 @@ odin::VertexBuffer::VertexBuffer(const DeviceManager& deviceManager,
 
 odin::VertexBuffer::~VertexBuffer() {
   std::cout << "IMPLEMENT VERTEX BUFFER DESTRUCTOR!" << std::endl;
+}
+
+const VkBuffer odin::VertexBuffer::getBuffer() const {
+  return buffer;
+}
+
+const size_t odin::VertexBuffer::getVertexCount() const {
+  return numVertices;
 }

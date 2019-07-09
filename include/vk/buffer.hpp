@@ -19,7 +19,7 @@ class Buffer {
 
   void copyBuffer(const DeviceManager& deviceManager,
                   const CommandPool& commandPool, VkBuffer srcBuffer,
-                  VkBuffer dstBuffer, VkDeviceSize size) const;
+                  VkBuffer dstBuffer, VkDeviceSize size);
 
   void createBuffer(VkPhysicalDevice physicalDevice, VkDevice logicalDevice,
                     VkDeviceSize size, VkBufferUsageFlags usage,

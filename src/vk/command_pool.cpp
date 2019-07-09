@@ -18,8 +18,8 @@ odin::CommandPool::~CommandPool() {
   std::cout << "MUST IMPLEMENT COMMAND POOL DESTRUCTOR!" << std::endl;
 }
 
-VkCommandBuffer odin::CommandPool::beginSingleTimeCommands(
-    const VkDevice& logicalDevice) {
+const VkCommandBuffer odin::CommandPool::beginSingleTimeCommands(
+    const VkDevice& logicalDevice) const {
   VkCommandBufferAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -41,7 +41,9 @@ VkCommandBuffer odin::CommandPool::beginSingleTimeCommands(
 void odin::CommandPool::createCommandBuffers(const VkDevice& logicalDevice,
                                              const RenderPass& renderPass,
                                              const Pipeline& graphicsPipeline,
-                                             const Swapchain& swapChain) {
+                                             const Swapchain& swapChain,
+                                             const IndexBuffer& indexBuffer,
+                                             const VertexBuffer& vertexBuffer) {
   commandBuffers.resize(swapChain.getFrameBufferSizes());
 
   VkCommandBufferAllocateInfo allocInfo = {};
@@ -90,12 +92,12 @@ void odin::CommandPool::createCommandBuffers(const VkDevice& logicalDevice,
                       graphicsPipeline.getGraphicsPipeline());
 
     // Bind the vertex buffer to the pipeline
-    VkBuffer vertexBuffers[] = {vertexBuffer};
+    VkBuffer vertexBuffers[] = {vertexBuffer.getBuffer()};
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
 
     // Bind the vertex indices buffer to the pipeline
-    vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0,
+    vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer.getBuffer(), 0,
                          VK_INDEX_TYPE_UINT32);
 
     // Bind descriptor sets to swap chain images
@@ -104,7 +106,7 @@ void odin::CommandPool::createCommandBuffers(const VkDevice& logicalDevice,
                             &descriptorSets[i], 0, nullptr);
 
     // Draw the vertices using the indices
-    vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()),
+    vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(vertexBuffer.getVertexCount()),
                      1, 0, 0, 0);
 
     // End render pass
@@ -117,7 +119,7 @@ void odin::CommandPool::createCommandBuffers(const VkDevice& logicalDevice,
 }
 
 void odin::CommandPool::endSingleTimeCommands(
-    const DeviceManager& deviceManager, VkCommandBuffer commandBuffer) {
+    const DeviceManager& deviceManager, VkCommandBuffer commandBuffer) const {
   vkEndCommandBuffer(commandBuffer);
 
   VkSubmitInfo submitInfo = {};

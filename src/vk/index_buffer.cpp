@@ -37,3 +37,7 @@ odin::IndexBuffer::IndexBuffer(const DeviceManager& deviceManager,
 odin::IndexBuffer::~IndexBuffer() {
     std::cout << "MUST IMPLEMENT INDEX BUFFER DESTRUCTOR!" << std::endl;
 }
+
+const VkBuffer odin::IndexBuffer::getBuffer() const {
+    return buffer;
+}

@@ -22,6 +22,8 @@ class IndexBuffer : Buffer {
 
   ~IndexBuffer();
 
+  const VkBuffer getBuffer() const;
+
  private:
   VkDeviceMemory indexBufferMemory;
 };
