@@ -100,3 +100,7 @@ const VkCommandBuffer* odin::CommandPool::getCommandBuffer(
     uint32_t bufferIndex) const {
   return &commandBuffers[bufferIndex];
 }
+
+const VkCommandPool odin::CommandPool::getCommandPool() const {
+  return commandPool;
+}

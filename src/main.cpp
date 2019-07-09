@@ -349,7 +349,8 @@ class App {
                  nullptr);
 
     vkDestroyDescriptorSetLayout(deviceManager->getLogicalDevice(),
-                                 descriptorSetLayout, nullptr);
+                                 *descriptorSetLayout->getDescriptorSetLayout(),
+                                 nullptr);
 
     vkDestroyBuffer(deviceManager->getLogicalDevice(), indexBuffer, nullptr);
     vkFreeMemory(deviceManager->getLogicalDevice(), indexBufferMemory, nullptr);
@@ -367,8 +368,8 @@ class App {
                      nullptr);
     }
 
-    vkDestroyCommandPool(deviceManager->getLogicalDevice(), commandPool,
-                         nullptr);
+    vkDestroyCommandPool(deviceManager->getLogicalDevice(),
+                         commandPool->getCommandPool(), nullptr);
 
     vkDestroyDevice(deviceManager->getLogicalDevice(), nullptr);
 
@@ -383,7 +384,7 @@ class App {
     VkCommandBufferAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = commandPool;
+    allocInfo.commandPool = commandPool->getCommandPool();
     allocInfo.commandBufferCount = 1;
 
     VkCommandBuffer commandBuffer;
@@ -411,14 +412,13 @@ class App {
                   VK_NULL_HANDLE);
     vkQueueWaitIdle(deviceManager->getGraphicsQueue());
 
-    vkFreeCommandBuffers(deviceManager->getLogicalDevice(), commandPool, 1,
-                         &commandBuffer);
+    vkFreeCommandBuffers(deviceManager->getLogicalDevice(),
+                         commandPool->getCommandPool(), 1, &commandBuffer);
   }
 
   void createCommandBuffers() {
     commandPool->createCommandBuffers(deviceManager->getLogicalDevice(),
-                                      *renderPass,
-                                      *graphicsPipeline,
+                                      *renderPass, *graphicsPipeline,
                                       *swapChain);
   }
 
@@ -480,33 +480,6 @@ class App {
     descriptorSetLayout =
         std::make_unique<DescriptorSet>(deviceManager->getLogicalDevice());
   }
-
-  // void createFrameBuffers() {
-  //  // Buffer size needs to match image views
-  //  swapChainFramebuffers.resize(swapChainImageViews.size());
-
-  //  for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-  //    std::array<VkImageView, 2> attachments = {swapChainImageViews[i],
-  //                                              depthImageView};
-
-  //    auto swapChainExtent = swapChain->getExtent();
-  //    VkFramebufferCreateInfo frameBufferInfo = {};
-  //    frameBufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-  //    frameBufferInfo.renderPass = renderPass;
-  //    frameBufferInfo.attachmentCount =
-  //        static_cast<uint32_t>(attachments.size());
-  //    frameBufferInfo.pAttachments = attachments.data();
-  //    frameBufferInfo.width = swapChainExtent.width;
-  //    frameBufferInfo.height = swapChainExtent.height;
-  //    frameBufferInfo.layers = 1;
-
-  //    if (vkCreateFramebuffer(deviceManager->getLogicalDevice(),
-  //                            &frameBufferInfo, nullptr,
-  //                            &swapChainFramebuffers[i]) != VK_SUCCESS) {
-  //      throw std::runtime_error("Failed to create framebuffer!");
-  //    }
-  //  }
-  //}
 
   void createSyncObjects() {
     imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -941,7 +914,7 @@ class App {
   void createDescriptorSets() {
     std::vector<VkDescriptorSetLayout> layouts(
         swapChain->getImageSize(),
-        descriptorSetLayout->getDescriptorSetLayout());
+        *descriptorSetLayout->getDescriptorSetLayout());
     VkDescriptorSetAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = descriptorPool;
@@ -1000,6 +973,11 @@ class App {
   void createDeviceManager() {
     deviceManager = std::make_unique<DeviceManager>(*instance, surface,
                                                     enableValidationLayers);
+  }
+
+  void createFrameBuffers() {
+    swapChain->createFrameBuffers(deviceManager->getLogicalDevice(),
+                                  *renderPass, depthImageView);
   }
 
   void recreateSwapChain() {

@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "vk/device_manager.hpp"
+#include "vk/render_pass.hpp"
 
 namespace odin {
 class Swapchain {
@@ -27,7 +28,9 @@ class Swapchain {
                               const VkImageAspectFlags& aspectFlags,
                               uint32_t mipLevels);
 
-  void createFrameBuffers(const VkDevice& logicalDevice);
+  void createFrameBuffers(const VkDevice& logicalDevice,
+                          const RenderPass& renderPass,
+                          const VkImageView& depthImageView);
 
   void createImageViews(const VkDevice& logicalDevice);
 

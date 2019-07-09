@@ -2,8 +2,8 @@
 
 odin::Swapchain::Swapchain(const odin::QueueFamilyIndices& queueFamilies,
                            const odin::SwapChainSupportDetails& details,
-                           const VkDevice& logicalDevice, const VkSurfaceKHR& surface,
-                           GLFWwindow* window) {
+                           const VkDevice& logicalDevice,
+                           const VkSurfaceKHR& surface, GLFWwindow* window) {
   createSwapChain(queueFamilies, details, logicalDevice, surface, window);
   createImageViews(logicalDevice);
 }
@@ -85,7 +85,9 @@ VkSurfaceFormatKHR odin::Swapchain::chooseSwapSurfaceFormat(
   return availableFormats[0];
 }
 
-void odin::Swapchain::createFrameBuffers(const VkDevice& logicalDevice) {
+void odin::Swapchain::createFrameBuffers(const VkDevice& logicalDevice,
+                                         const RenderPass& renderPass,
+                                         const VkImageView& depthImageView) {
   // Buffer size needs to match image views
   swapChainFramebuffers.resize(swapChainImageViews.size());
 
@@ -95,15 +97,15 @@ void odin::Swapchain::createFrameBuffers(const VkDevice& logicalDevice) {
 
     VkFramebufferCreateInfo frameBufferInfo = {};
     frameBufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    frameBufferInfo.renderPass = renderPass;
+    frameBufferInfo.renderPass = renderPass.getRenderPass();
     frameBufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
     frameBufferInfo.pAttachments = attachments.data();
     frameBufferInfo.width = swapChainExtent.width;
     frameBufferInfo.height = swapChainExtent.height;
     frameBufferInfo.layers = 1;
 
-    if (vkCreateFramebuffer(logicalDevice, &frameBufferInfo,
-                            nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
+    if (vkCreateFramebuffer(logicalDevice, &frameBufferInfo, nullptr,
+                            &swapChainFramebuffers[i]) != VK_SUCCESS) {
       throw std::runtime_error("Failed to create framebuffer!");
     }
   }

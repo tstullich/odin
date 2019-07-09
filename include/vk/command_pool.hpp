@@ -21,12 +21,14 @@ class CommandPool {
               const odin::QueueFamilyIndices& queueFamilyIndices);
   ~CommandPool();
 
-  const VkCommandBuffer* getCommandBuffer(uint32_t bufferIndex) const;
-
   void createCommandBuffers(const VkDevice& logicalDevice,
                             const RenderPass& renderPass,
                             const Pipeline& graphicsPipeline,
                             const Swapchain& swapChain);
+
+  const VkCommandBuffer* getCommandBuffer(uint32_t bufferIndex) const;
+
+  const VkCommandPool getCommandPool() const;
 
  private:
   VkCommandPool commandPool;
