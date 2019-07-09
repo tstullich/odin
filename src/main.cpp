@@ -30,6 +30,7 @@
 #include "vk/pipeline.hpp"
 #include "vk/render_pass.hpp"
 #include "vk/swapchain.hpp"
+#include "vk/uniform_buffer.hpp"
 #include "vk/vertex_buffer.hpp"
 
 const int WIDTH = 800;
@@ -147,11 +148,7 @@ class App {
   std::vector<uint32_t> indices;
   std::unique_ptr<IndexBuffer> indexBuffer;
 
-  VkBuffer stagingBuffer;
-  VkDeviceMemory stagingBufferMemory;
-
-  std::vector<VkBuffer> uniformBuffers;
-  std::vector<VkDeviceMemory> uniformBuffersMemory;
+  std::vector<UniformBuffer> uniformBuffers;
 
   VkDescriptorPool descriptorPool;
   std::vector<VkDescriptorSet> descriptorSets;
@@ -380,42 +377,6 @@ class App {
     glfwTerminate();
   }
 
-  VkCommandBuffer beginSingleTimeCommands() {
-    VkCommandBufferAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = commandPool->getCommandPool();
-    allocInfo.commandBufferCount = 1;
-
-    VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(deviceManager->getLogicalDevice(), &allocInfo,
-                             &commandBuffer);
-
-    VkCommandBufferBeginInfo beginInfo = {};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-    vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-    return commandBuffer;
-  }
-
-  void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
-    vkEndCommandBuffer(commandBuffer);
-
-    VkSubmitInfo submitInfo = {};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffer;
-
-    vkQueueSubmit(deviceManager->getGraphicsQueue(), 1, &submitInfo,
-                  VK_NULL_HANDLE);
-    vkQueueWaitIdle(deviceManager->getGraphicsQueue());
-
-    vkFreeCommandBuffers(deviceManager->getLogicalDevice(),
-                         commandPool->getCommandPool(), 1, &commandBuffer);
-  }
-
   void createCommandBuffers() {
     commandPool->createCommandBuffers(deviceManager->getLogicalDevice(),
                                       *renderPass, *graphicsPipeline,
@@ -506,22 +467,10 @@ class App {
     }
   }
 
-  // void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
-  // {
-  //  // TODO Create a pre-allocated buffer pool for short-lived command buffers
-  //  // Make sure to then use the VK_COMMAND_POOL_CREATE_TRANSIENT_BIT flag
-  //  VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-
-  //  VkBufferCopy copyRegion = {};
-  //  copyRegion.size = size;
-  //  vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-  //  endSingleTimeCommands(commandBuffer);
-  //}
-
   void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width,
                          uint32_t height) {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+    VkCommandBuffer commandBuffer =
+        commandPool->beginSingleTimeCommands(deviceManager->getLogicalDevice());
 
     VkBufferImageCopy region = {};
     region.bufferOffset = 0;
@@ -539,13 +488,14 @@ class App {
     vkCmdCopyBufferToImage(commandBuffer, buffer, image,
                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-    endSingleTimeCommands(commandBuffer);
+    commandPool->endSingleTimeCommands(*deviceManager, commandBuffer);
   }
 
   void transitionImageLayout(VkImage image, VkFormat format,
                              VkImageLayout oldLayout, VkImageLayout newLayout,
                              uint32_t mipLevels) {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+    VkCommandBuffer commandBuffer =
+        commandPool->beginSingleTimeCommands(deviceManager->getLogicalDevice());
 
     // Setup image memory barrier to transition our image layout
     VkImageMemoryBarrier barrier = {};
@@ -606,7 +556,7 @@ class App {
     vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0,
                          nullptr, 0, nullptr, 1, &barrier);
 
-    endSingleTimeCommands(commandBuffer);
+    commandPool->endSingleTimeCommands(*deviceManager, commandBuffer);
   }
 
   //  void createImage(uint32_t width, uint32_t height, uint32_t mipLevels,
@@ -742,18 +692,16 @@ class App {
   }
 
   void createVertexBuffer() {
-    vertexBuffer = std::make_unique<VertexBuffer>(
-        deviceManager->getLogicalDevice(), deviceManager->getPhysicalDevice(),
-        vertices);
+    vertexBuffer =
+        std::make_unique<VertexBuffer>(*deviceManager, *commandPool, vertices);
   }
 
   // TODO Look into packing vertex data and vertex indices into one
   // VkBuffer object using offsets. This way the data is more cache coherent
   // and the driver can optimize better. Look into 'aliasing'.
   void createIndexBuffer() {
-    indexBuffer = std::make_unique<IndexBuffer>(
-        deviceManager->getLogicalDevice(), deviceManager->getPhysicalDevice(),
-        indices);
+    indexBuffer =
+        std::make_unique<IndexBuffer>(*deviceManager, *commandPool, indices);
   }
 
   void createUniformBuffers() {
@@ -762,13 +710,11 @@ class App {
     // Our strategy is to create buffers for each swapchain image
     auto swapChainImageSize = swapChain->getImageSize();
     uniformBuffers.resize(swapChainImageSize);
-    uniformBuffersMemory.resize(swapChainImageSize);
 
     for (size_t i = 0; i < swapChainImageSize; i++) {
-      createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                       VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                   uniformBuffers[i], uniformBuffersMemory[i]);
+      UniformBuffer uniformBuffer(*deviceManager, swapChainImageSize,
+                                  bufferSize);
+      uniformBuffers.push_back(uniformBuffer);
     }
   }
 
@@ -799,10 +745,11 @@ class App {
 
     void* data;
     vkMapMemory(deviceManager->getLogicalDevice(),
-                uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
+                uniformBuffers[currentImage].getDeviceMemory(), 0, sizeof(ubo),
+                0, &data);
     memcpy(data, &ubo, sizeof(ubo));
     vkUnmapMemory(deviceManager->getLogicalDevice(),
-                  uniformBuffersMemory[currentImage]);
+                  uniformBuffers[currentImage].getDeviceMemory());
   }
 
   void createDescriptorPool() {
@@ -846,7 +793,7 @@ class App {
 
     for (size_t i = 0; i < swapChain->getImageSize(); i++) {
       VkDescriptorBufferInfo bufferInfo = {};
-      bufferInfo.buffer = uniformBuffers[i];
+      bufferInfo.buffer = uniformBuffers[i].getBuffer();
       bufferInfo.offset = 0;
       bufferInfo.range = sizeof(UniformBufferObject);
 
@@ -994,7 +941,8 @@ class App {
           "texture image format does not support linear blitting!");
     }
 
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+    VkCommandBuffer commandBuffer =
+        commandPool->beginSingleTimeCommands(deviceManager->getLogicalDevice());
 
     VkImageMemoryBarrier barrier = {};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1067,7 +1015,7 @@ class App {
                          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr,
                          0, nullptr, 1, &barrier);
 
-    endSingleTimeCommands(commandBuffer);
+    commandPool->endSingleTimeCommands(*deviceManager, commandBuffer);
   }
 };
 }  // namespace odin

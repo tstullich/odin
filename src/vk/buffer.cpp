@@ -6,17 +6,20 @@ odin::Buffer::~Buffer() {
   std::cout << "IMPLEMENT BUFFER DESTRUCTOR!" << std::endl;
 }
 
-void odin::Buffer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
+void odin::Buffer::copyBuffer(const DeviceManager& deviceManager,
+                              const CommandPool& commandPool,
+                              VkBuffer srcBuffer, VkBuffer dstBuffer,
                               VkDeviceSize size) {
   // TODO Create a pre-allocated buffer pool for short-lived command buffers
   // Make sure to then use the VK_COMMAND_POOL_CREATE_TRANSIENT_BIT flag
-  VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+  auto commandBuffer =
+      commandPool.beginSingleTimeCommands(deviceManager.getLogicalDevice());
 
   VkBufferCopy copyRegion = {};
   copyRegion.size = size;
   vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
-  endSingleTimeCommands(commandBuffer);
+  commandPool.endSingleTimeCommands(deviceManager, commandBuffer);
 }
 
 void odin::Buffer::createBuffer(VkPhysicalDevice physicalDevice,

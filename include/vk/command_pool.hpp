@@ -19,12 +19,18 @@ class CommandPool {
  public:
   CommandPool(const VkDevice& logicalDevice,
               const odin::QueueFamilyIndices& queueFamilyIndices);
+
   ~CommandPool();
+
+  VkCommandBuffer beginSingleTimeCommands(const VkDevice& logicalDevice);
 
   void createCommandBuffers(const VkDevice& logicalDevice,
                             const RenderPass& renderPass,
                             const Pipeline& graphicsPipeline,
                             const Swapchain& swapChain);
+
+  void endSingleTimeCommands(const DeviceManager& deviceManager,
+                             VkCommandBuffer commandBuffer);
 
   const VkCommandBuffer* getCommandBuffer(uint32_t bufferIndex) const;
 

@@ -1,4 +1,3 @@
-
 #ifndef ODIN_VERTEX_BUFFER_HPP
 #define ODIN_VERTEX_BUFFER_HPP
 
@@ -10,6 +9,8 @@
 #include <vector>
 
 #include "vk/buffer.hpp"
+#include "vk/command_pool.hpp"
+#include "vk/device_manager.hpp"
 
 // TODO Look into packing vertex data and vertex indices into one
 // VkBuffer object using offsets. This way the data is more cache coherent
@@ -17,8 +18,8 @@
 namespace odin {
 class VertexBuffer : Buffer {
  public:
-  VertexBuffer(const VkDevice& logicalDevice,
-               const VkPhysicalDevice& physicalDevice,
+  VertexBuffer(const DeviceManager& deviceManager,
+               const CommandPool& commandPool,
                const std::vector<Vertex>& vertices);
 
   ~VertexBuffer();

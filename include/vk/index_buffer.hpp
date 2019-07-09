@@ -10,12 +10,14 @@
 #include <vector>
 
 #include "vk/buffer.hpp"
+#include "vk/command_pool.hpp"
+#include "vk/device_manager.hpp"
 
 namespace odin {
 class IndexBuffer : Buffer {
  public:
-  IndexBuffer(const VkDevice& logicalDevice,
-              const VkPhysicalDevice& physicalDevice,
+  IndexBuffer(const DeviceManager& deviceManager,
+              const CommandPool& commandPool,
               const std::vector<uint32_t>& indices);
 
   ~IndexBuffer();

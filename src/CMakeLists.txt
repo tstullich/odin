@@ -13,6 +13,7 @@ set(SOURCE_FILES
     vk/buffer.cpp
     vk/vertex_buffer.cpp
     vk/index_buffer.cpp
+    vk/uniform_buffer.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
