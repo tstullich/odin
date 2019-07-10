@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 
+#include "renderer/vertex.hpp"
 #include "vk/buffer.hpp"
 #include "vk/command_pool.hpp"
 #include "vk/device_manager.hpp"
