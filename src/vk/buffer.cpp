@@ -22,6 +22,41 @@ void odin::Buffer::copyBuffer(const DeviceManager& deviceManager,
   commandPool.endSingleTimeCommands(deviceManager, commandBuffer);
 }
 
+void odin::Buffer::createBuffer(const DeviceManager& deviceManager,
+                                VkDeviceSize size, VkBufferUsageFlags usage,
+                                VkMemoryPropertyFlags properties,
+                                VkBuffer& buffer,
+                                VkDeviceMemory& bufferMemory) {
+  VkBufferCreateInfo bufferInfo = {};
+  bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  bufferInfo.size = size;
+  bufferInfo.usage = usage;
+  bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  if (vkCreateBuffer(deviceManager.getLogicalDevice(), &bufferInfo, nullptr,
+                     &buffer) != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create buffer!");
+  }
+
+  VkMemoryRequirements memRequirements;
+  vkGetBufferMemoryRequirements(deviceManager.getLogicalDevice(), buffer,
+                                &memRequirements);
+
+  VkMemoryAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = memRequirements.size;
+  allocInfo.memoryTypeIndex =
+      findMemoryType(deviceManager.getPhysicalDevice(),
+                     memRequirements.memoryTypeBits, properties);
+
+  if (vkAllocateMemory(deviceManager.getLogicalDevice(), &allocInfo, nullptr,
+                       &bufferMemory) != VK_SUCCESS) {
+    throw std::runtime_error("Failed to allocate buffer memory!");
+  }
+
+  vkBindBufferMemory(deviceManager.getLogicalDevice(), buffer, bufferMemory, 0);
+}
+
 void odin::Buffer::createBuffer(VkPhysicalDevice physicalDevice,
                                 VkDevice logicalDevice, VkDeviceSize size,
                                 VkBufferUsageFlags usage,

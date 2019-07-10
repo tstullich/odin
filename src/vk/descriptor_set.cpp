@@ -4,7 +4,9 @@ odin::DescriptorSet::DescriptorSet(const VkDevice& logicalDevice) {
   createDescriptorSetLayout(logicalDevice);
 }
 
-odin::DescriptorSet::~DescriptorSet() {}
+odin::DescriptorSet::~DescriptorSet() {
+  std::cout << "IMPLEMENT DESCRIPTOR SET DESTRUCTOR!" << std::endl;
+}
 
 void odin::DescriptorSet::createDescriptorSetLayout(const VkDevice& logicalDevice) {
   VkDescriptorSetLayoutBinding uboLayoutBinding = {};

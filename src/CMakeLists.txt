@@ -9,11 +9,13 @@ set(SOURCE_FILES
     vk/pipeline.cpp
     vk/shader_module.cpp
     vk/command_pool.cpp
-    vk/texture.cpp
+    vk/texture_image.cpp
     vk/buffer.cpp
     vk/vertex_buffer.cpp
     vk/index_buffer.cpp
     vk/uniform_buffer.cpp
+    vk/texture_sampler.cpp
+    vk/descriptor_pool.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})

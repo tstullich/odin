@@ -12,6 +12,16 @@
 
 namespace odin {
 class Buffer {
+ public:
+  static uint32_t findMemoryType(const VkPhysicalDevice& physicalDevice,
+                                 uint32_t typeFilter,
+                                 VkMemoryPropertyFlags properties);
+
+  static void createBuffer(const DeviceManager& deviceManager,
+                           VkDeviceSize size, VkBufferUsageFlags usage,
+                           VkMemoryPropertyFlags properties, VkBuffer& buffer,
+                           VkDeviceMemory& bufferMemory);
+
  protected:
   Buffer();
 
@@ -25,10 +35,6 @@ class Buffer {
                     VkDeviceSize size, VkBufferUsageFlags usage,
                     VkMemoryPropertyFlags properties, VkBuffer& buffer,
                     VkDeviceMemory& bufferMemory);
-
-  uint32_t findMemoryType(const VkPhysicalDevice& physicalDevice,
-                          uint32_t typeFilter,
-                          VkMemoryPropertyFlags properties);
 
   VkBuffer buffer;
 };
