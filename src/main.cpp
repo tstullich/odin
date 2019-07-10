@@ -23,6 +23,7 @@
 
 #include "renderer/vertex.hpp"
 #include "vk/command_pool.hpp"
+#include "vk/depth_image.hpp"
 #include "vk/descriptor_pool.hpp"
 #include "vk/descriptor_set.hpp"
 #include "vk/device_manager.hpp"
@@ -105,9 +106,7 @@ class App {
   VkImageView textureImageView;
   std::unique_ptr<TextureSampler> textureSampler;
 
-  VkImage depthImage;
-  VkDeviceMemory depthImageMemory;
-  VkImageView depthImageView;
+  std::unique_ptr<DepthImage> depthImage;
 
   VkPipelineStageFlags sourceStage;
   VkPipelineStageFlags destinationStage;
@@ -135,7 +134,6 @@ class App {
     createDepthResources();
     createFrameBuffers();
     createTextureImage();
-    createTextureImageView();
     createTextureSampler();
     loadModel();
     createVertexBuffer();
@@ -236,55 +234,49 @@ class App {
   }
 
   void cleanupSwapChain() {
-    //  vkDestroyImageView(deviceManager->getLogicalDevice(), depthImageView,
-    //                     nullptr);
-    //  vkDestroyImage(deviceManager->getLogicalDevice(), depthImage, nullptr);
-    //  vkFreeMemory(deviceManager->getLogicalDevice(), depthImageMemory,
-    //  nullptr);
+    vkDestroyImageView(deviceManager->getLogicalDevice(), depthImageView,
+                       nullptr);
+    vkDestroyImage(deviceManager->getLogicalDevice(), depthImage, nullptr);
+    vkFreeMemory(deviceManager->getLogicalDevice(), depthImageMemory, nullptr);
 
-    //  for (auto framebuffer : swapChainFramebuffers) {
-    //    vkDestroyFramebuffer(deviceManager->getLogicalDevice(), framebuffer,
-    //                         nullptr);
-    //  }
+    for (auto framebuffer : swapChainFramebuffers) {
+      vkDestroyFramebuffer(deviceManager->getLogicalDevice(), framebuffer,
+                           nullptr);
+    }
 
-    //  vkFreeCommandBuffers(deviceManager->getLogicalDevice(), commandPool,
-    //                       static_cast<uint32_t>(commandBuffers.size()),
-    //                       commandBuffers.data());
+    vkFreeCommandBuffers(deviceManager->getLogicalDevice(), commandPool,
+                         static_cast<uint32_t>(commandBuffers.size()),
+                         commandBuffers.data());
 
-    //  vkDestroyPipeline(deviceManager->getLogicalDevice(), graphicsPipeline,
-    //                    nullptr);
-    //  vkDestroyPipelineLayout(deviceManager->getLogicalDevice(),
-    //  pipelineLayout,
-    //                          nullptr);
-    //  vkDestroyRenderPass(deviceManager->getLogicalDevice(), renderPass,
-    //  nullptr);
+    vkDestroyPipeline(deviceManager->getLogicalDevice(), graphicsPipeline,
+                      nullptr);
+    vkDestroyPipelineLayout(deviceManager->getLogicalDevice(), pipelineLayout,
+                            nullptr);
+    vkDestroyRenderPass(deviceManager->getLogicalDevice(), renderPass, nullptr);
 
-    //  for (auto imageView : swapChainImageViews) {
-    //    vkDestroyImageView(deviceManager->getLogicalDevice(), imageView,
-    //    nullptr);
-    //  }
+    for (auto imageView : swapChainImageViews) {
+      vkDestroyImageView(deviceManager->getLogicalDevice(), imageView, nullptr);
+    }
 
-    //  vkDestroySwapchainKHR(deviceManager->getLogicalDevice(), swapChain,
-    //                        nullptr);
+    vkDestroySwapchainKHR(deviceManager->getLogicalDevice(), swapChain,
+                          nullptr);
 
-    //  for (size_t i = 0; i < swapChainImages.size(); i++) {
-    //    vkDestroyBuffer(deviceManager->getLogicalDevice(), uniformBuffers[i],
-    //                    nullptr);
-    //    vkFreeMemory(deviceManager->getLogicalDevice(),
-    //    uniformBuffersMemory[i],
-    //                 nullptr);
-    //  }
+    for (size_t i = 0; i < swapChainImages.size(); i++) {
+      vkDestroyBuffer(deviceManager->getLogicalDevice(), uniformBuffers[i],
+                      nullptr);
+      vkFreeMemory(deviceManager->getLogicalDevice(), uniformBuffersMemory[i],
+                   nullptr);
+    }
 
-    //  vkDestroyDescriptorPool(deviceManager->getLogicalDevice(),
-    //  descriptorPool,
-    //                          nullptr);
+    vkDestroyDescriptorPool(deviceManager->getLogicalDevice(), descriptorPool,
+                            nullptr);
   }
 
   void cleanup() {
     cleanupSwapChain();
 
-    vkDestroySampler(deviceManager->getLogicalDevice(), textureSampler,
-                     nullptr);
+    vkDestroySampler(deviceManager->getLogicalDevice(),
+                     textureSampler->getSampler(), nullptr);
     vkDestroyImageView(deviceManager->getLogicalDevice(), textureImageView,
                        nullptr);
 
@@ -327,57 +319,10 @@ class App {
   void createCommandBuffers() {
     commandPool->createCommandBuffers(deviceManager->getLogicalDevice(),
                                       *renderPass, *graphicsPipeline,
-                                      *swapChain);
+                                      *swapChain, *indexBuffer, *vertexBuffer);
   }
 
   void createCommandPool() { commandPool = std::make_unique<CommandPool>(); }
-
-  VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates,
-                               VkImageTiling tiling,
-                               VkFormatFeatureFlags features) {
-    for (VkFormat format : candidates) {
-      VkFormatProperties props;
-      vkGetPhysicalDeviceFormatProperties(deviceManager->getPhysicalDevice(),
-                                          format, &props);
-
-      // More formats are available but we only need linear and optimal tiling
-      // for now
-      if (tiling == VK_IMAGE_TILING_LINEAR &&
-          (props.linearTilingFeatures & features) == features) {
-        return format;
-      } else if (tiling == VK_IMAGE_TILING_OPTIMAL &&
-                 (props.optimalTilingFeatures & features) == features) {
-        return format;
-      }
-    }
-
-    throw std::runtime_error("Failed to find supported format!");
-  }
-
-  VkFormat findDepthFormat() {
-    return findSupportedFormat(
-        {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
-         VK_FORMAT_D24_UNORM_S8_UINT},
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-  }
-
-  void createDepthResources() {
-    VkFormat depthFormat = findDepthFormat();
-
-    auto swapChainExtent = swapChain->getExtent();
-    createImage(
-        swapChainExtent.width, swapChainExtent.height, 1, depthFormat,
-        VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
-
-    depthImageView = swapChain->createImageView(
-        deviceManager->getLogicalDevice(), depthImage, depthFormat,
-        VK_IMAGE_ASPECT_DEPTH_BIT, 1);
-
-    transitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
-                          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
-  }
 
   void createDescriptorSetLayout() {
     descriptorSetLayout =
@@ -411,14 +356,7 @@ class App {
 
   void createTextureImage() {
     textureImage = std::make_unique<TextureImage>(*deviceManager, *commandPool,
-                                                  TEXTURE_PATH);
-  }
-
-  void createTextureImageView() {
-    textureImageView = swapChain->createImageView(
-        deviceManager->getLogicalDevice(), textureImage->getTextureImage(),
-        VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT,
-        textureImage->getMipLevels());
+                                                  *swapChain, TEXTURE_PATH);
   }
 
   void createTextureSampler() {
@@ -487,8 +425,14 @@ class App {
                   uniformBuffers[currentImage].getDeviceMemory());
   }
 
+  void createDepthResources() {
+    depthImage =
+        std::make_unique<DepthImage>(*deviceManager, *commandPool, *swapChain);
+  }
+
   void createDescriptorPool() {
-    descriptorPool = std::make_unique<DescriptorPool>(*deviceManager, *swapChain);
+    descriptorPool =
+        std::make_unique<DescriptorPool>(*deviceManager, *swapChain);
   }
 
   void createDescriptorSets() {
@@ -517,7 +461,7 @@ class App {
       VkDescriptorImageInfo imageInfo = {};
       imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
       imageInfo.imageView = textureImageView;
-      imageInfo.sampler = textureSampler;
+      imageInfo.sampler = textureSampler->getSampler();
 
       std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
       descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -557,7 +501,7 @@ class App {
 
   void createFrameBuffers() {
     swapChain->createFrameBuffers(deviceManager->getLogicalDevice(),
-                                  *renderPass, depthImageView);
+                                  *renderPass, depthImage->getImageView());
   }
 
   void recreateSwapChain() {

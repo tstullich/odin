@@ -9,7 +9,9 @@ set(SOURCE_FILES
     vk/pipeline.cpp
     vk/shader_module.cpp
     vk/command_pool.cpp
+    vk/image.cpp
     vk/texture_image.cpp
+    vk/depth_image.cpp
     vk/buffer.cpp
     vk/vertex_buffer.cpp
     vk/index_buffer.cpp

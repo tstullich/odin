@@ -16,6 +16,8 @@ class DescriptorSet {
   const VkDescriptorSetLayout* getDescriptorSetLayout() const;
 
  private:
+  void createDescriptorSets();
+
   void createDescriptorSetLayout(const VkDevice& logicalDevice);
 
   VkDescriptorSetLayout descriptorSetLayout;

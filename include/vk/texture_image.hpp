@@ -13,9 +13,10 @@
 #include "vk/buffer.hpp"
 #include "vk/command_pool.hpp"
 #include "vk/device_manager.hpp"
+#include "vk/image.hpp"
 
 namespace odin {
-class TextureImage {
+class TextureImage : Image {
  public:
   TextureImage(const DeviceManager& deviceManager,
                const CommandPool& commandPool, const std::string& texturePath);
@@ -26,20 +27,19 @@ class TextureImage {
 
   const VkImage getTextureImage() const;
 
+  const VkImageView getTextureImageView() const;
+
  private:
   void copyBufferToImage(const DeviceManager& deviceManager,
                          const CommandPool& commandPool, VkBuffer buffer,
                          VkImage image, uint32_t width, uint32_t height);
 
-  void createImage(const DeviceManager& deviceManager, uint32_t width,
-                   uint32_t height, uint32_t mipLevels, VkFormat format,
-                   VkImageTiling tiling, VkImageUsageFlags usage,
-                   VkMemoryPropertyFlags properties, VkImage& image,
-                   VkDeviceMemory& imageMemory);
-
   void createTextureImage(const DeviceManager& deviceManager,
                           const CommandPool& commandPool,
                           const std::string& texturePath);
+
+  void createTextureImageView(const DeviceManager& deviceManager,
+                              const Swapchain& swapChain);
 
   void generateMipmaps(const DeviceManager& deviceManager,
                        const CommandPool& commandPool, VkImage image,
@@ -54,8 +54,8 @@ class TextureImage {
                              VkImageLayout newLayout, uint32_t mipLevels);
 
   uint32_t mipLevels;
-  VkImage textureImage;
   VkDeviceMemory textureImageMemory;
+  VkImageView textureImageView;
 };
 }  // namespace odin
 #endif  // ODIN_TEXTURE_IMAGE_HPP

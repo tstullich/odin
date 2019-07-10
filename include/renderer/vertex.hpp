@@ -58,8 +58,8 @@ struct Vertex {
 // https://en.cppreference.com/w/cpp/utility/hash
 namespace std {
 template <>
-struct hash<Vertex> {
-  size_t operator()(Vertex const& vertex) const {
+struct hash<odin::Vertex> {
+  size_t operator()(odin::Vertex const& vertex) const {
     return ((hash<glm::vec3>()(vertex.pos) ^
              (hash<glm::vec3>()(vertex.color) << 1)) >>
             1) ^

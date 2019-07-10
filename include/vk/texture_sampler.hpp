@@ -18,6 +18,8 @@ class TextureSampler {
 
   ~TextureSampler();
 
+  const VkSampler getSampler() const;
+
  private:
   VkSampler textureSampler;
 };

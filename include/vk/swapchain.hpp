@@ -26,7 +26,7 @@ class Swapchain {
   VkImageView createImageView(const VkDevice& logicalDevice,
                               const VkImage& image, const VkFormat& format,
                               const VkImageAspectFlags& aspectFlags,
-                              uint32_t mipLevels);
+                              uint32_t mipLevels) const;
 
   void createFrameBuffers(const VkDevice& logicalDevice,
                           const RenderPass& renderPass,

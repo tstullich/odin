@@ -113,7 +113,7 @@ void odin::Swapchain::createFrameBuffers(const VkDevice& logicalDevice,
 
 VkImageView odin::Swapchain::createImageView(
     const VkDevice& logicalDevice, const VkImage& image, const VkFormat& format,
-    const VkImageAspectFlags& aspectFlags, uint32_t mipLevels) {
+    const VkImageAspectFlags& aspectFlags, uint32_t mipLevels) const {
   VkImageViewCreateInfo viewInfo = {};
   viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   viewInfo.image = image;
