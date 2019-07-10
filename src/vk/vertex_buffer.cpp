@@ -40,10 +40,10 @@ odin::VertexBuffer::~VertexBuffer() {
   std::cout << "IMPLEMENT VERTEX BUFFER DESTRUCTOR!" << std::endl;
 }
 
-const VkBuffer odin::VertexBuffer::getBuffer() const {
-  return buffer;
+const VkBuffer odin::VertexBuffer::getBuffer() const { return buffer; }
+
+const VkDeviceMemory odin::VertexBuffer::getBufferMemory() const {
+  return vertexBufferMemory;
 }
 
-const size_t odin::VertexBuffer::getVertexCount() const {
-  return numVertices;
-}
+const size_t odin::VertexBuffer::getVertexCount() const { return numVertices; }

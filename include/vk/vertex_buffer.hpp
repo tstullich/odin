@@ -17,6 +17,10 @@
 // VkBuffer object using offsets. This way the data is more cache coherent
 // and the driver can optimize better. Look into 'aliasing'.
 namespace odin {
+
+// Forward declarations
+class CommandPool;
+
 class VertexBuffer : Buffer {
  public:
   VertexBuffer(const DeviceManager& deviceManager,
@@ -26,6 +30,8 @@ class VertexBuffer : Buffer {
   ~VertexBuffer();
 
   const VkBuffer getBuffer() const;
+
+  const VkDeviceMemory getBufferMemory() const;
 
   const size_t getVertexCount() const;
 

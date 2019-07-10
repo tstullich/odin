@@ -19,13 +19,16 @@ namespace odin {
 class TextureImage : Image {
  public:
   TextureImage(const DeviceManager& deviceManager,
-               const CommandPool& commandPool, const std::string& texturePath);
+               const CommandPool& commandPool, const Swapchain& swapChain,
+               const std::string& texturePath);
 
   ~TextureImage();
 
   const uint32_t getMipLevels() const;
 
   const VkImage getTextureImage() const;
+
+  const VkDeviceMemory getTextureImageMemory() const;
 
   const VkImageView getTextureImageView() const;
 

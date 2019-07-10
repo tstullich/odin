@@ -141,6 +141,14 @@ const VkCommandBuffer* odin::CommandPool::getCommandBuffer(
   return &commandBuffers[bufferIndex];
 }
 
+const std::vector<VkCommandBuffer> odin::CommandPool::getCommandBuffers() const {
+  return commandBuffers;
+}
+
+const size_t odin::CommandPool::getCommandBufferSize() const {
+  return commandBuffers.size();
+}
+
 const VkCommandPool odin::CommandPool::getCommandPool() const {
   return commandPool;
 }

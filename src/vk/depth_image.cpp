@@ -59,3 +59,15 @@ VkFormat odin::DepthImage::findSupportedFormat(
 
   throw std::runtime_error("Failed to find supported format!");
 }
+
+const VkDeviceMemory odin::DepthImage::getDeviceMemory() const {
+  return depthImageMemory;
+}
+
+const VkImage odin::DepthImage::getImage() const {
+  return image;
+}
+
+const VkImageView odin::DepthImage::getImageView() const {
+  return depthImageView;
+}

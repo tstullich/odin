@@ -38,11 +38,15 @@ class Swapchain {
 
   VkFramebuffer getFrameBuffer(size_t index) const;
 
+  std::vector<VkFramebuffer> getFramebuffers() const;
+
   size_t getFrameBufferSizes() const;
 
   VkFormat getImageFormat() const;
 
   size_t getImageSize() const;
+
+  std::vector<VkImageView> getImageViews() const;
 
   VkSwapchainKHR getSwapchain() const;
 

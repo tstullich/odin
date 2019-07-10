@@ -14,6 +14,10 @@
 #include "vk/device_manager.hpp"
 
 namespace odin {
+
+// Forward declarations
+class CommandPool;
+
 class IndexBuffer : Buffer {
  public:
   IndexBuffer(const DeviceManager& deviceManager,
@@ -23,6 +27,8 @@ class IndexBuffer : Buffer {
   ~IndexBuffer();
 
   const VkBuffer getBuffer() const;
+
+  const VkDeviceMemory getBufferMemory() const;
 
  private:
   VkDeviceMemory indexBufferMemory;

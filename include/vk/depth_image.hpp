@@ -20,19 +20,23 @@ class DepthImage : Image {
 
   ~DepthImage();
 
+  const VkDeviceMemory getDeviceMemory() const;
+
+  const VkImage getImage() const;
+
   const VkImageView getImageView() const;
+
+  static VkFormat findDepthFormat(const DeviceManager& deviceManager);
 
  private:
   void createDepthResources(const DeviceManager& deviceManager,
                             const CommandPool& commandPool,
                             const Swapchain& swapChain);
 
-  VkFormat findDepthFormat(const DeviceManager& deviceManager);
-
-  VkFormat findSupportedFormat(const DeviceManager& deviceManager,
-                               const std::vector<VkFormat>& candidates,
-                               VkImageTiling tiling,
-                               VkFormatFeatureFlags features);
+  static VkFormat findSupportedFormat(const DeviceManager& deviceManager,
+                                      const std::vector<VkFormat>& candidates,
+                                      VkImageTiling tiling,
+                                      VkFormatFeatureFlags features);
 
   VkDeviceMemory depthImageMemory;
   VkImageView depthImageView;

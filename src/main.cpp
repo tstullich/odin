@@ -234,42 +234,46 @@ class App {
   }
 
   void cleanupSwapChain() {
-    vkDestroyImageView(deviceManager->getLogicalDevice(), depthImageView,
-                       nullptr);
-    vkDestroyImage(deviceManager->getLogicalDevice(), depthImage, nullptr);
-    vkFreeMemory(deviceManager->getLogicalDevice(), depthImageMemory, nullptr);
+    vkDestroyImageView(deviceManager->getLogicalDevice(),
+                       depthImage->getImageView(), nullptr);
+    vkDestroyImage(deviceManager->getLogicalDevice(), depthImage->getImage(),
+                   nullptr);
+    vkFreeMemory(deviceManager->getLogicalDevice(),
+                 depthImage->getDeviceMemory(), nullptr);
 
-    for (auto framebuffer : swapChainFramebuffers) {
+    for (auto framebuffer : swapChain->getFramebuffers()) {
       vkDestroyFramebuffer(deviceManager->getLogicalDevice(), framebuffer,
                            nullptr);
     }
 
-    vkFreeCommandBuffers(deviceManager->getLogicalDevice(), commandPool,
-                         static_cast<uint32_t>(commandBuffers.size()),
-                         commandBuffers.data());
+    auto commandBuffers = commandPool->getCommandBuffers();
+    vkFreeCommandBuffers(
+        deviceManager->getLogicalDevice(), commandPool->getCommandPool(),
+        static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 
-    vkDestroyPipeline(deviceManager->getLogicalDevice(), graphicsPipeline,
-                      nullptr);
-    vkDestroyPipelineLayout(deviceManager->getLogicalDevice(), pipelineLayout,
-                            nullptr);
-    vkDestroyRenderPass(deviceManager->getLogicalDevice(), renderPass, nullptr);
+    vkDestroyPipeline(deviceManager->getLogicalDevice(),
+                      graphicsPipeline->getGraphicsPipeline(), nullptr);
+    vkDestroyPipelineLayout(deviceManager->getLogicalDevice(),
+                            graphicsPipeline->getPipelineLayout(), nullptr);
+    vkDestroyRenderPass(deviceManager->getLogicalDevice(),
+                        renderPass->getRenderPass(), nullptr);
 
-    for (auto imageView : swapChainImageViews) {
+    for (auto imageView : swapChain->getImageViews()) {
       vkDestroyImageView(deviceManager->getLogicalDevice(), imageView, nullptr);
     }
 
-    vkDestroySwapchainKHR(deviceManager->getLogicalDevice(), swapChain,
-                          nullptr);
+    vkDestroySwapchainKHR(deviceManager->getLogicalDevice(),
+                          swapChain->getSwapchain(), nullptr);
 
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
-      vkDestroyBuffer(deviceManager->getLogicalDevice(), uniformBuffers[i],
-                      nullptr);
-      vkFreeMemory(deviceManager->getLogicalDevice(), uniformBuffersMemory[i],
-                   nullptr);
+    for (size_t i = 0; i < swapChain->getImageSize(); i++) {
+      vkDestroyBuffer(deviceManager->getLogicalDevice(),
+                      uniformBuffers[i].getBuffer(), nullptr);
+      vkFreeMemory(deviceManager->getLogicalDevice(),
+                   uniformBuffers[i].getDeviceMemory(), nullptr);
     }
 
-    vkDestroyDescriptorPool(deviceManager->getLogicalDevice(), descriptorPool,
-                            nullptr);
+    vkDestroyDescriptorPool(deviceManager->getLogicalDevice(),
+                            descriptorPool->getDescriptorPool(), nullptr);
   }
 
   void cleanup() {
@@ -280,20 +284,24 @@ class App {
     vkDestroyImageView(deviceManager->getLogicalDevice(), textureImageView,
                        nullptr);
 
-    vkDestroyImage(deviceManager->getLogicalDevice(), textureImage, nullptr);
-    vkFreeMemory(deviceManager->getLogicalDevice(), textureImageMemory,
-                 nullptr);
+    vkDestroyImage(deviceManager->getLogicalDevice(),
+                   textureImage->getTextureImage(), nullptr);
+    vkFreeMemory(deviceManager->getLogicalDevice(),
+                 textureImage->getTextureImageMemory(), nullptr);
 
     vkDestroyDescriptorSetLayout(deviceManager->getLogicalDevice(),
                                  *descriptorSetLayout->getDescriptorSetLayout(),
                                  nullptr);
 
-    vkDestroyBuffer(deviceManager->getLogicalDevice(), indexBuffer, nullptr);
-    vkFreeMemory(deviceManager->getLogicalDevice(), indexBufferMemory, nullptr);
+    vkDestroyBuffer(deviceManager->getLogicalDevice(), indexBuffer->getBuffer(),
+                    nullptr);
+    vkFreeMemory(deviceManager->getLogicalDevice(),
+                 indexBuffer->getBufferMemory(), nullptr);
 
-    vkDestroyBuffer(deviceManager->getLogicalDevice(), vertexBuffer, nullptr);
-    vkFreeMemory(deviceManager->getLogicalDevice(), vertexBufferMemory,
-                 nullptr);
+    vkDestroyBuffer(deviceManager->getLogicalDevice(),
+                    vertexBuffer->getBuffer(), nullptr);
+    vkFreeMemory(deviceManager->getLogicalDevice(),
+                 vertexBuffer->getBufferMemory(), nullptr);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
       vkDestroySemaphore(deviceManager->getLogicalDevice(),
@@ -322,7 +330,11 @@ class App {
                                       *swapChain, *indexBuffer, *vertexBuffer);
   }
 
-  void createCommandPool() { commandPool = std::make_unique<CommandPool>(); }
+  void createCommandPool() {
+    commandPool = std::make_unique<CommandPool>(
+        deviceManager->getLogicalDevice(),
+        deviceManager->findQueueFamilies(surface));
+  }
 
   void createDescriptorSetLayout() {
     descriptorSetLayout =
@@ -536,14 +548,15 @@ class App {
   }
 
   void createRenderPass() {
-    renderPass = std::make_unique<RenderPass>(deviceManager->getLogicalDevice(),
-                                              swapChain->getImageFormat(),
-                                              findDepthFormat());
+    renderPass = std::make_unique<RenderPass>(
+        deviceManager->getLogicalDevice(), swapChain->getImageFormat(),
+        DepthImage::findDepthFormat(*deviceManager));
   }
 
   void createGraphicsPipeline() {
     graphicsPipeline = std::make_unique<Pipeline>(
-        deviceManager->getLogicalDevice(), swapChain, renderPass);
+        deviceManager->getLogicalDevice(), *swapChain, *renderPass,
+        *descriptorSetLayout);
   }
 
   void loadModel() {

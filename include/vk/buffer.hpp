@@ -11,6 +11,9 @@
 #include "vk/device_manager.hpp"
 
 namespace odin {
+// Forward declarations
+class CommandPool;
+
 class Buffer {
  public:
   static uint32_t findMemoryType(const VkPhysicalDevice& physicalDevice,

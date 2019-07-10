@@ -13,8 +13,8 @@ set(SOURCE_FILES
     vk/texture_image.cpp
     vk/depth_image.cpp
     vk/buffer.cpp
-    vk/vertex_buffer.cpp
     vk/index_buffer.cpp
+    vk/vertex_buffer.cpp
     vk/uniform_buffer.cpp
     vk/texture_sampler.cpp
     vk/descriptor_pool.cpp

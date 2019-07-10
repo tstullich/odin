@@ -17,6 +17,11 @@
 #include "vk/vertex_buffer.hpp"
 
 namespace odin {
+
+// Forward declarations
+class IndexBuffer;
+class VertexBuffer;
+
 class CommandPool {
  public:
   CommandPool(const VkDevice& logicalDevice,
@@ -24,7 +29,8 @@ class CommandPool {
 
   ~CommandPool();
 
-  const VkCommandBuffer beginSingleTimeCommands(const VkDevice& logicalDevice) const;
+  const VkCommandBuffer beginSingleTimeCommands(
+      const VkDevice& logicalDevice) const;
 
   void createCommandBuffers(const VkDevice& logicalDevice,
                             const RenderPass& renderPass,
@@ -37,6 +43,10 @@ class CommandPool {
                              VkCommandBuffer commandBuffer) const;
 
   const VkCommandBuffer* getCommandBuffer(uint32_t bufferIndex) const;
+
+  const std::vector<VkCommandBuffer> getCommandBuffers() const;
+
+  const size_t getCommandBufferSize() const;
 
   const VkCommandPool getCommandPool() const;
 

@@ -93,7 +93,13 @@ const uint32_t odin::TextureImage::getMipLevels() const { return mipLevels; }
 
 const VkImage odin::TextureImage::getTextureImage() const { return image; }
 
-const VkImageView odin::TextureImage::getTextureImageView() const { return textureImageView; }
+const VkDeviceMemory odin::TextureImage::getTextureImageMemory() const {
+  return textureImageMemory;
+}
+
+const VkImageView odin::TextureImage::getTextureImageView() const {
+  return textureImageView;
+}
 
 void odin::TextureImage::generateMipmaps(const DeviceManager& deviceManager,
                                          const CommandPool& commandPool,

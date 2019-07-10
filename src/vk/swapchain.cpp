@@ -22,6 +22,10 @@ VkFramebuffer odin::Swapchain::getFrameBuffer(size_t index) const {
   return swapChainFramebuffers[index];
 }
 
+std::vector<VkFramebuffer> odin::Swapchain::getFramebuffers() const {
+  return swapChainFramebuffers;
+}
+
 size_t odin::Swapchain::getFrameBufferSizes() const {
   return swapChainFramebuffers.size();
 }
