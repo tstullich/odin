@@ -1,4 +1,5 @@
 #include "vk/vertex_buffer.hpp"
+#include "vk/command_pool.hpp"
 
 odin::VertexBuffer::VertexBuffer(const DeviceManager& deviceManager,
                                  const CommandPool& commandPool,

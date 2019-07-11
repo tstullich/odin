@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "vk/buffer.hpp"
-#include "vk/command_pool.hpp"
 #include "vk/device_manager.hpp"
 
 namespace odin {

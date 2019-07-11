@@ -3,18 +3,18 @@
 odin::Pipeline::Pipeline(const VkDevice& logicalDevice,
                          const Swapchain& swapChain,
                          const RenderPass& renderPass,
-                         const DescriptorSet& descriptorSet) {
-  createPipeline(logicalDevice, swapChain, renderPass, descriptorSet);
+                         const DescriptorSetLayout& descriptorSetLayout) {
+  createPipeline(logicalDevice, swapChain, renderPass, descriptorSetLayout);
 }
 
 odin::Pipeline::~Pipeline() {
   std::cout << "MUST IMPLEMENT PIPELINE DESTRUCTOR!" << std::endl;
 }
 
-void odin::Pipeline::createPipeline(const VkDevice& logicalDevice,
-                                    const Swapchain& swapChain,
-                                    const RenderPass& renderPass,
-                                    const DescriptorSet& descriptorSet) {
+void odin::Pipeline::createPipeline(
+    const VkDevice& logicalDevice, const Swapchain& swapChain,
+    const RenderPass& renderPass,
+    const DescriptorSetLayout& descriptorSetLayout) {
   // Load shaders from file
   auto vertShaderCode = FileReader::readFile("shaders/vert.spv");
   auto fragShaderCode = FileReader::readFile("shaders/frag.spv");
@@ -150,7 +150,7 @@ void odin::Pipeline::createPipeline(const VkDevice& logicalDevice,
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 1;
-  pipelineLayoutInfo.pSetLayouts = descriptorSet.getDescriptorSetLayout();
+  pipelineLayoutInfo.pSetLayouts = descriptorSetLayout.getDescriptorSetLayout();
 
   if (vkCreatePipelineLayout(logicalDevice, &pipelineLayoutInfo, nullptr,
                              &pipelineLayout) != VK_SUCCESS) {

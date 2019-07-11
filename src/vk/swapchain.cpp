@@ -36,6 +36,10 @@ VkFormat odin::Swapchain::getImageFormat() const {
 
 size_t odin::Swapchain::getImageSize() const { return swapChainImages.size(); }
 
+std::vector<VkImageView> odin::Swapchain::getImageViews() const {
+  return swapChainImageViews;
+}
+
 VkSwapchainKHR odin::Swapchain::getSwapchain() const { return swapChain; }
 
 VkExtent2D odin::Swapchain::chooseSwapExtent(

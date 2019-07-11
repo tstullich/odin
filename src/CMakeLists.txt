@@ -5,7 +5,6 @@ set(SOURCE_FILES
     vk/device_manager.cpp
     vk/swapchain.cpp
     vk/render_pass.cpp
-    vk/descriptor_set.cpp
     vk/pipeline.cpp
     vk/shader_module.cpp
     vk/command_pool.cpp
@@ -17,6 +16,7 @@ set(SOURCE_FILES
     vk/vertex_buffer.cpp
     vk/uniform_buffer.cpp
     vk/texture_sampler.cpp
+    vk/descriptor_set_layout.cpp
     vk/descriptor_pool.cpp
 )
 

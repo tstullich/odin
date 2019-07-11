@@ -1,4 +1,6 @@
 #include "vk/command_pool.hpp"
+#include "vk/index_buffer.hpp"
+#include "vk/vertex_buffer.hpp"
 
 odin::CommandPool::CommandPool(
     const VkDevice& logicalDevice,
@@ -38,12 +40,11 @@ const VkCommandBuffer odin::CommandPool::beginSingleTimeCommands(
   return commandBuffer;
 }
 
-void odin::CommandPool::createCommandBuffers(const VkDevice& logicalDevice,
-                                             const RenderPass& renderPass,
-                                             const Pipeline& graphicsPipeline,
-                                             const Swapchain& swapChain,
-                                             const IndexBuffer& indexBuffer,
-                                             const VertexBuffer& vertexBuffer) {
+void odin::CommandPool::createCommandBuffers(
+    const VkDevice& logicalDevice, const RenderPass& renderPass,
+    const Pipeline& graphicsPipeline, const Swapchain& swapChain,
+    const IndexBuffer& indexBuffer, const VertexBuffer& vertexBuffer,
+    const std::vector<VkDescriptorSet>& descriptorSets) {
   commandBuffers.resize(swapChain.getFrameBufferSizes());
 
   VkCommandBufferAllocateInfo allocInfo = {};
@@ -106,8 +107,9 @@ void odin::CommandPool::createCommandBuffers(const VkDevice& logicalDevice,
                             &descriptorSets[i], 0, nullptr);
 
     // Draw the vertices using the indices
-    vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(vertexBuffer.getVertexCount()),
-                     1, 0, 0, 0);
+    vkCmdDrawIndexed(commandBuffers[i],
+                     static_cast<uint32_t>(vertexBuffer.getVertexCount()), 1, 0,
+                     0, 0);
 
     // End render pass
     vkCmdEndRenderPass(commandBuffers[i]);
@@ -141,7 +143,8 @@ const VkCommandBuffer* odin::CommandPool::getCommandBuffer(
   return &commandBuffers[bufferIndex];
 }
 
-const std::vector<VkCommandBuffer> odin::CommandPool::getCommandBuffers() const {
+const std::vector<VkCommandBuffer> odin::CommandPool::getCommandBuffers()
+    const {
   return commandBuffers;
 }
 

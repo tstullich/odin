@@ -10,13 +10,15 @@
 
 #include "renderer/vertex.hpp"
 #include "vk/buffer.hpp"
-#include "vk/command_pool.hpp"
 #include "vk/device_manager.hpp"
 
 // TODO Look into packing vertex data and vertex indices into one
 // VkBuffer object using offsets. This way the data is more cache coherent
 // and the driver can optimize better. Look into 'aliasing'.
 namespace odin {
+
+// Forward declarations
+class CommandPool;
 
 class VertexBuffer : public Buffer {
  public:

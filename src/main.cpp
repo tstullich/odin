@@ -21,11 +21,12 @@
 #include <unordered_map>
 #include <vector>
 
+#include "renderer/ubo.hpp"
 #include "renderer/vertex.hpp"
 #include "vk/command_pool.hpp"
 #include "vk/depth_image.hpp"
 #include "vk/descriptor_pool.hpp"
-#include "vk/descriptor_set.hpp"
+#include "vk/descriptor_set_layout.hpp"
 #include "vk/device_manager.hpp"
 #include "vk/index_buffer.hpp"
 #include "vk/instance.hpp"
@@ -50,12 +51,6 @@ const bool enableValidationLayers = false;
 const bool enableValidationLayers = true;
 #endif
 
-struct UniformBufferObject {
-  alignas(16) glm::mat4 model;
-  alignas(16) glm::mat4 view;
-  alignas(16) glm::mat4 proj;
-} ubo;
-
 namespace odin {
 class App {
  public:
@@ -78,8 +73,6 @@ class App {
 
   std::unique_ptr<RenderPass> renderPass;
 
-  std::unique_ptr<DescriptorSet> descriptorSetLayout;
-
   std::unique_ptr<Pipeline> graphicsPipeline;
 
   std::unique_ptr<CommandPool> commandPool;
@@ -99,11 +92,10 @@ class App {
 
   std::vector<UniformBuffer> uniformBuffers;
 
+  std::unique_ptr<DescriptorSetLayout> descriptorSetLayout;
   std::unique_ptr<DescriptorPool> descriptorPool;
-  std::vector<VkDescriptorSet> descriptorSets;
 
   std::unique_ptr<TextureImage> textureImage;
-  VkImageView textureImageView;
   std::unique_ptr<TextureSampler> textureSampler;
 
   std::unique_ptr<DepthImage> depthImage;
@@ -140,7 +132,6 @@ class App {
     createIndexBuffer();
     createUniformBuffers();
     createDescriptorPool();
-    createDescriptorSets();
     createCommandBuffers();
     createSyncObjects();
   }
@@ -281,8 +272,8 @@ class App {
 
     vkDestroySampler(deviceManager->getLogicalDevice(),
                      textureSampler->getSampler(), nullptr);
-    vkDestroyImageView(deviceManager->getLogicalDevice(), textureImageView,
-                       nullptr);
+    vkDestroyImageView(deviceManager->getLogicalDevice(),
+                       textureImage->getTextureImageView(), nullptr);
 
     vkDestroyImage(deviceManager->getLogicalDevice(),
                    textureImage->getTextureImage(), nullptr);
@@ -327,7 +318,8 @@ class App {
   void createCommandBuffers() {
     commandPool->createCommandBuffers(deviceManager->getLogicalDevice(),
                                       *renderPass, *graphicsPipeline,
-                                      *swapChain, *indexBuffer, *vertexBuffer);
+                                      *swapChain, *indexBuffer, *vertexBuffer,
+                                      descriptorPool->getDescriptorSets());
   }
 
   void createCommandPool() {
@@ -337,8 +329,7 @@ class App {
   }
 
   void createDescriptorSetLayout() {
-    descriptorSetLayout =
-        std::make_unique<DescriptorSet>(deviceManager->getLogicalDevice());
+    descriptorSetLayout = std::make_unique<DescriptorSetLayout>(*deviceManager);
   }
 
   void createSyncObjects() {
@@ -393,13 +384,12 @@ class App {
     VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
     // Our strategy is to create buffers for each swapchain image
-    auto swapChainImageSize = swapChain->getImageSize();
-    uniformBuffers.resize(swapChainImageSize);
+    size_t swapChainImageSize = swapChain->getImageSize();
+    // TODO See why this does not compile
+    //uniformBuffers.resize(swapChainImageSize);
 
     for (size_t i = 0; i < swapChainImageSize; i++) {
-      UniformBuffer uniformBuffer(*deviceManager, swapChainImageSize,
-                                  bufferSize);
-      uniformBuffers.push_back(uniformBuffer);
+      uniformBuffers.emplace_back(*deviceManager, swapChainImageSize, bufferSize);
     }
   }
 
@@ -414,7 +404,7 @@ class App {
                      .count();
 
     auto swapChainExtent = swapChain->getExtent();
-    UniformBufferObject ubo{};
+    UniformBufferObject ubo;
     ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f),
                             glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.view =
@@ -443,60 +433,10 @@ class App {
   }
 
   void createDescriptorPool() {
-    descriptorPool =
-        std::make_unique<DescriptorPool>(*deviceManager, *swapChain);
-  }
-
-  void createDescriptorSets() {
-    std::vector<VkDescriptorSetLayout> layouts(
-        swapChain->getImageSize(),
-        *descriptorSetLayout->getDescriptorSetLayout());
-    VkDescriptorSetAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = descriptorPool->getDescriptorPool();
-    allocInfo.descriptorSetCount =
-        static_cast<uint32_t>(swapChain->getImageSize());
-    allocInfo.pSetLayouts = layouts.data();
-
-    descriptorSets.resize(swapChain->getImageSize());
-    if (vkAllocateDescriptorSets(deviceManager->getLogicalDevice(), &allocInfo,
-                                 descriptorSets.data()) != VK_SUCCESS) {
-      throw std::runtime_error("Failed to allocate descriptor sets!");
-    }
-
-    for (size_t i = 0; i < swapChain->getImageSize(); i++) {
-      VkDescriptorBufferInfo bufferInfo = {};
-      bufferInfo.buffer = uniformBuffers[i].getBuffer();
-      bufferInfo.offset = 0;
-      bufferInfo.range = sizeof(UniformBufferObject);
-
-      VkDescriptorImageInfo imageInfo = {};
-      imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      imageInfo.imageView = textureImageView;
-      imageInfo.sampler = textureSampler->getSampler();
-
-      std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
-      descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      descriptorWrites[0].dstSet = descriptorSets[i];
-      descriptorWrites[0].dstBinding = 0;
-      descriptorWrites[0].dstArrayElement = 0;
-      descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-      descriptorWrites[0].descriptorCount = 1;
-      descriptorWrites[0].pBufferInfo = &bufferInfo;
-
-      descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      descriptorWrites[1].dstSet = descriptorSets[i];
-      descriptorWrites[1].dstBinding = 1;
-      descriptorWrites[1].dstArrayElement = 0;
-      descriptorWrites[1].descriptorType =
-          VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      descriptorWrites[1].descriptorCount = 1;
-      descriptorWrites[1].pImageInfo = &imageInfo;
-
-      vkUpdateDescriptorSets(deviceManager->getLogicalDevice(),
-                             static_cast<uint32_t>(descriptorWrites.size()),
-                             descriptorWrites.data(), 0, nullptr);
-    }
+    // This also creates the necessary VkDescriptorSets
+    descriptorPool = std::make_unique<DescriptorPool>(
+        *deviceManager, *swapChain, *descriptorSetLayout, uniformBuffers,
+        *textureImage, *textureSampler);
   }
 
   void createSurface() {
@@ -535,7 +475,6 @@ class App {
     createFrameBuffers();
     createUniformBuffers();
     createDescriptorPool();
-    createDescriptorSets();
     createCommandBuffers();
   }
 

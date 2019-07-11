@@ -3,8 +3,6 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
 
 #include <iostream>
 #include <stdexcept>
@@ -50,11 +48,6 @@ class TextureImage : Image {
                        int32_t texHeight, uint32_t mipLevels);
 
   bool hasStencilComponent(const VkFormat& format);
-
-  void transitionImageLayout(const DeviceManager& deviceManager,
-                             const CommandPool& commandPool, VkImage image,
-                             VkFormat format, VkImageLayout oldLayout,
-                             VkImageLayout newLayout, uint32_t mipLevels);
 
   uint32_t mipLevels;
   VkDeviceMemory textureImageMemory;

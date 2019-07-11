@@ -1,14 +1,16 @@
-#include "vk/descriptor_set.hpp"
+#include "vk/descriptor_set_layout.hpp"
 
-odin::DescriptorSet::DescriptorSet(const VkDevice& logicalDevice) {
-  createDescriptorSetLayout(logicalDevice);
+odin::DescriptorSetLayout::DescriptorSetLayout(
+    const DeviceManager& deviceManager) {
+  createDescriptorSetLayout(deviceManager);
 }
 
-odin::DescriptorSet::~DescriptorSet() {
-  std::cout << "IMPLEMENT DESCRIPTOR SET DESTRUCTOR!" << std::endl;
+odin::DescriptorSetLayout::~DescriptorSetLayout() {
+  std::cout << "IMPLEMENT DESCRIPTOR SET LAYOUT DESTRUCTOR!" << std::endl;
 }
 
-void odin::DescriptorSet::createDescriptorSetLayout(const VkDevice& logicalDevice) {
+void odin::DescriptorSetLayout::createDescriptorSetLayout(
+    const DeviceManager& deviceManager) {
   VkDescriptorSetLayoutBinding uboLayoutBinding = {};
   uboLayoutBinding.binding = 0;
   uboLayoutBinding.descriptorCount = 1;
@@ -31,13 +33,14 @@ void odin::DescriptorSet::createDescriptorSetLayout(const VkDevice& logicalDevic
   layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
   layoutInfo.pBindings = bindings.data();
 
-  if (vkCreateDescriptorSetLayout(logicalDevice,
-                                  &layoutInfo, nullptr,
+  if (vkCreateDescriptorSetLayout(deviceManager.getLogicalDevice(), &layoutInfo,
+                                  nullptr,
                                   &descriptorSetLayout) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create descriptor set layout!");
   }
 }
 
-const VkDescriptorSetLayout* odin::DescriptorSet::getDescriptorSetLayout() const {
-    return &descriptorSetLayout;
+const VkDescriptorSetLayout* odin::DescriptorSetLayout::getDescriptorSetLayout()
+    const {
+  return &descriptorSetLayout;
 }

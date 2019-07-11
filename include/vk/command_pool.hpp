@@ -35,7 +35,8 @@ class CommandPool {
                             const Pipeline& graphicsPipeline,
                             const Swapchain& swapChain,
                             const IndexBuffer& indexBuffer,
-                            const VertexBuffer& vertexBuffer);
+                            const VertexBuffer& vertexBuffer,
+                            const std::vector<VkDescriptorSet>& descriptorSets);
 
   void endSingleTimeCommands(const DeviceManager& deviceManager,
                              VkCommandBuffer commandBuffer) const;

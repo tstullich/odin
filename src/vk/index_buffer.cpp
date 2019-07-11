@@ -1,4 +1,5 @@
 #include "vk/index_buffer.hpp"
+#include "vk/command_pool.hpp"
 
 odin::IndexBuffer::IndexBuffer(const DeviceManager& deviceManager,
                                const CommandPool& commandPool,
