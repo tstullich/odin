@@ -10,11 +10,9 @@
 #include <vector>
 
 #include "vk/device_manager.hpp"
-#include "vk/index_buffer.hpp"
 #include "vk/pipeline.hpp"
 #include "vk/render_pass.hpp"
 #include "vk/swapchain.hpp"
-#include "vk/vertex_buffer.hpp"
 
 namespace odin {
 

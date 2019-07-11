@@ -18,10 +18,7 @@
 // and the driver can optimize better. Look into 'aliasing'.
 namespace odin {
 
-// Forward declarations
-class CommandPool;
-
-class VertexBuffer : Buffer {
+class VertexBuffer : public Buffer {
  public:
   VertexBuffer(const DeviceManager& deviceManager,
                const CommandPool& commandPool,

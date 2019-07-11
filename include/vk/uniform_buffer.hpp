@@ -9,11 +9,10 @@
 #include "vk/buffer.hpp"
 
 namespace odin {
-class UniformBuffer : Buffer {
+class UniformBuffer : public Buffer {
  public:
   UniformBuffer(const DeviceManager& deviceManager,
-                const size_t swapChainImageSize,
-                const VkDeviceSize bufferSize);
+                const size_t swapChainImageSize, const VkDeviceSize bufferSize);
 
   ~UniformBuffer();
 

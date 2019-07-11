@@ -15,10 +15,10 @@
 
 namespace odin {
 
-// Forward declarations
+// forward declarations
 class CommandPool;
 
-class IndexBuffer : Buffer {
+class IndexBuffer : public Buffer {
  public:
   IndexBuffer(const DeviceManager& deviceManager,
               const CommandPool& commandPool,
