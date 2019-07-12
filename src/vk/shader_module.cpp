@@ -7,11 +7,12 @@ odin::ShaderModule::ShaderModule(const VkDevice& logicalDevice,
   createInfo.codeSize = shaderCode.size();
   createInfo.pCode = reinterpret_cast<const uint32_t*>(shaderCode.data());
 
-  VkShaderModule shaderModule;
   if (vkCreateShaderModule(logicalDevice, &createInfo, nullptr,
                            &shaderModule) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create shader module!");
   }
+
+  ownedDevice = logicalDevice;
 }
 
 odin::ShaderModule::~ShaderModule() {

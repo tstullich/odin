@@ -52,6 +52,7 @@ const bool enableValidationLayers = true;
 #endif
 
 namespace odin {
+
 class App {
  public:
   void run() {

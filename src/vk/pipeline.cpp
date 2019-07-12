@@ -21,7 +21,7 @@ void odin::Pipeline::createPipeline(
 
   // Create VkShaderModules around the shaders
   ShaderModule vertShaderModule(logicalDevice, vertShaderCode);
-  ShaderModule fragShaderModule(logicalDevice, vertShaderCode);
+  ShaderModule fragShaderModule(logicalDevice, fragShaderCode);
 
   // Setup Vertex Stage
   VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
