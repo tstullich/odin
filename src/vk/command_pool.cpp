@@ -108,7 +108,7 @@ void odin::CommandPool::createCommandBuffers(
 
     // Draw the vertices using the indices
     vkCmdDrawIndexed(commandBuffers[i],
-                     static_cast<uint32_t>(vertexBuffer.getVertexCount()), 1, 0,
+                     static_cast<uint32_t>(indexBuffer.getNumIndices()), 1, 0,
                      0, 0);
 
     // End render pass

@@ -4,7 +4,8 @@
 odin::IndexBuffer::IndexBuffer(const DeviceManager& deviceManager,
                                const CommandPool& commandPool,
                                const std::vector<uint32_t>& indices) {
-  VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+  numIndices = indices.size();
+  VkDeviceSize bufferSize = sizeof(indices[0]) * numIndices;
 
   VkBuffer stagingBuffer;
   VkDeviceMemory stagingBufferMemory;
@@ -43,4 +44,8 @@ const VkBuffer odin::IndexBuffer::getBuffer() const { return buffer; }
 
 const VkDeviceMemory odin::IndexBuffer::getBufferMemory() const {
   return indexBufferMemory;
+}
+
+const uint32_t odin::IndexBuffer::getNumIndices() const {
+  return numIndices;
 }

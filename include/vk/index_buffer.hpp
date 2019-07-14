@@ -29,7 +29,10 @@ class IndexBuffer : public Buffer {
 
   const VkDeviceMemory getBufferMemory() const;
 
+  const uint32_t getNumIndices() const;
+
  private:
+  uint32_t numIndices;
   VkDeviceMemory indexBufferMemory;
 };
 }  // namespace odin
