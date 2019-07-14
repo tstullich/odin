@@ -64,6 +64,11 @@ void odin::TextureImage::createTextureImage(const DeviceManager& deviceManager,
                            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                        stagingBuffer, stagingBufferMemory);
 
+  void* data;
+  vkMapMemory(deviceManager.getLogicalDevice(), stagingBufferMemory, 0, imageSize, 0, &data);
+  memcpy(data, pixels, static_cast<size_t>(imageSize));
+  vkUnmapMemory(deviceManager.getLogicalDevice(), stagingBufferMemory);
+
   stbi_image_free(pixels);
 
   createImage(deviceManager, texWidth, texHeight, mipLevels,

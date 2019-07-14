@@ -387,10 +387,10 @@ class App {
     // Our strategy is to create buffers for each swapchain image
     size_t swapChainImageSize = swapChain->getImageSize();
     // TODO See why this does not compile
-    //uniformBuffers.resize(swapChainImageSize);
+    uniformBuffers.resize(swapChainImageSize);
 
     for (size_t i = 0; i < swapChainImageSize; i++) {
-      uniformBuffers.emplace_back(*deviceManager, swapChainImageSize, bufferSize);
+      uniformBuffers[i] = UniformBuffer(*deviceManager, swapChainImageSize, bufferSize);
     }
   }
 

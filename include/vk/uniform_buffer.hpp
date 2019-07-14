@@ -11,6 +11,9 @@
 namespace odin {
 class UniformBuffer : public Buffer {
  public:
+  // Dummy constructor. Should not be used for actual initialization
+  UniformBuffer() {};
+
   UniformBuffer(const DeviceManager& deviceManager,
                 const size_t swapChainImageSize, const VkDeviceSize bufferSize);
 
