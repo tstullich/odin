@@ -39,4 +39,5 @@ include_directories(${TINY_OBJ_INCLUDE_DIR})
 include_directories(${GLM_INCLUDE_DIR})
 include_directories(${ODIN_INCLUDE_DIR})
 
+add_subdirectory(shaders)
 add_subdirectory(src)
