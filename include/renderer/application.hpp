@@ -51,7 +51,7 @@ const bool enableValidationLayers = true;
 
 namespace odin {
 
-// rename boost namespace for readability
+// Rename boost namespace for readability
 namespace po = boost::program_options;
 
 class Application {
@@ -59,7 +59,7 @@ class Application {
   Application(int argc, char* argv[]);
 
   void run();
-  
+
   static std::string FRAGMENT_SHADER_PATH;
   static std::string VERTEX_SHADER_PATH;
   static std::string MODEL_PATH;
