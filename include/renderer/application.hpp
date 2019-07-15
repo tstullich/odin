@@ -4,7 +4,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE  // Will need this because OpenGL uses \
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE // Will need this because OpenGL uses\
                                     // [-1.0, 1.0] z-depth range
 #include <boost/program_options/option.hpp>
 #include <boost/program_options/options_description.hpp>
