@@ -1,4 +1,5 @@
 #include "vk/command_pool.hpp"
+#include "vk/pipeline.hpp"
 #include "vk/index_buffer.hpp"
 #include "vk/vertex_buffer.hpp"
 

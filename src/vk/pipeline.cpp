@@ -1,4 +1,3 @@
-#include "main.cpp"
 #include "vk/pipeline.hpp"
 
 odin::Pipeline::Pipeline(const VkDevice& logicalDevice,
@@ -18,9 +17,9 @@ void odin::Pipeline::createPipeline(
     const DescriptorSetLayout& descriptorSetLayout) {
   // Load shaders from file
   auto vertShaderCode =
-      FileReader::readFile(odin::App::VERTEX_SHADER_PATH);
+      FileReader::readFile(odin::Application::VERTEX_SHADER_PATH);
   auto fragShaderCode =
-      FileReader::readFile("/home/tim/projects/cpp/odin/shaders/frag.spv");
+      FileReader::readFile(odin::Application::FRAGMENT_SHADER_PATH);
 
   // Create VkShaderModules around the shaders
   ShaderModule vertShaderModule(logicalDevice, vertShaderCode);

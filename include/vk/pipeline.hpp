@@ -4,6 +4,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "renderer/application.hpp"
 #include "renderer/vertex.hpp"
 #include "utils/file_reader.hpp"
 #include "vk/descriptor_set_layout.hpp"

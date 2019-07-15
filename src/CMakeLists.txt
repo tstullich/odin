@@ -1,6 +1,7 @@
 # TODO Find a better way to list source files
 set(SOURCE_FILES
     main.cpp
+    renderer/application.cpp
     vk/instance.cpp
     vk/device_manager.cpp
     vk/swapchain.cpp
