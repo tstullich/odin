@@ -22,6 +22,9 @@ set(SOURCE_FILES
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
-target_link_libraries(${PROJECT_NAME} glfw Vulkan::Vulkan ${VULKAN_SDK/lib})
+target_link_libraries(${PROJECT_NAME}
+                        glfw Vulkan::Vulkan
+                        ${VULKAN_SDK/lib}
+                        ${Boost_LIBRARIES})
 
 install(TARGETS odin DESTINATION ${ODIN_INSTALL_BIN_DIR})

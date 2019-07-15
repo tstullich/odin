@@ -8,6 +8,11 @@
 #include <glm/gtx/hash.hpp>
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
+#include <boost/program_options/option.hpp>
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/parsers.hpp>
+#include <boost/program_options/value_semantic.hpp>
+#include <boost/program_options/variables_map.hpp>
 
 #include <algorithm>
 #include <array>
@@ -38,13 +43,6 @@
 #include "vk/uniform_buffer.hpp"
 #include "vk/vertex_buffer.hpp"
 
-const int WIDTH = 800;
-const int HEIGHT = 600;
-const int MAX_FRAMES_IN_FLIGHT = 2;
-
-const std::string MODEL_PATH = "models/chalet.obj";
-const std::string TEXTURE_PATH = "textures/chalet.jpg";
-
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
@@ -53,8 +51,17 @@ const bool enableValidationLayers = true;
 
 namespace odin {
 
+// rename boost namespace for readability
+namespace po = boost::program_options;
+
 class App {
  public:
+  App(int argc, char* argv[]) {
+    if (parseArguments(argc, argv)) {
+      throw std::runtime_error("Unable to parse command line arguments!");
+    }
+  }
+
   void run() {
     initWindow();
     initVulkan();
@@ -63,47 +70,6 @@ class App {
   }
 
  private:
-  GLFWwindow* window;
-
-  std::unique_ptr<odin::Instance> instance;
-  VkSurfaceKHR surface;
-
-  std::unique_ptr<DeviceManager> deviceManager;
-
-  std::unique_ptr<Swapchain> swapChain;
-
-  std::unique_ptr<RenderPass> renderPass;
-
-  std::unique_ptr<Pipeline> graphicsPipeline;
-
-  std::unique_ptr<CommandPool> commandPool;
-
-  std::vector<VkSemaphore> imageAvailableSemaphores;
-  std::vector<VkSemaphore> renderFinishedSemaphores;
-  std::vector<VkFence> inFlightFences;
-  size_t currentFrame = 0;
-
-  bool framebufferResized = false;
-
-  std::vector<Vertex> vertices;
-  std::unique_ptr<VertexBuffer> vertexBuffer;
-
-  std::vector<uint32_t> indices;
-  std::unique_ptr<IndexBuffer> indexBuffer;
-
-  std::vector<UniformBuffer> uniformBuffers;
-
-  std::unique_ptr<DescriptorSetLayout> descriptorSetLayout;
-  std::unique_ptr<DescriptorPool> descriptorPool;
-
-  std::unique_ptr<TextureImage> textureImage;
-  std::unique_ptr<TextureSampler> textureSampler;
-
-  std::unique_ptr<DepthImage> depthImage;
-
-  VkPipelineStageFlags sourceStage;
-  VkPipelineStageFlags destinationStage;
-
   void initWindow() {
     glfwInit();
 
@@ -150,6 +116,64 @@ class App {
     // Needed so that we do not destroy resources while
     // draw calls may still be going on
     vkDeviceWaitIdle(deviceManager->getLogicalDevice());
+  }
+
+  int parseArguments(int argc, char* argv[]) {
+    po::options_description desc("Allowed options");
+    desc.add_options()("help", "Produce help message")(
+        "vs", po::value<std::string>(&VERTEX_SHADER_PATH),
+        "Vertex shader path (SPIR-V)")(
+        "fs", po::value<std::string>(&FRAGMENT_SHADER_PATH),
+        "Fragment shader path (SPIR-V)")(
+        "obj", po::value<std::string>(&MODEL_PATH), "OBJ model file path")(
+        "tex", po::value<std::string>(&TEXTURE_PATH), "Texture file path");
+
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if (vm.count("help")) {
+      std::cout << desc << std::endl;
+      return 1;
+    }
+
+    if (vm.count("vs")) {
+      std::cout << "Vertex shader path: " << VERTEX_SHADER_PATH << std::endl;
+    } else {
+      std::cout
+          << "Vertex shader was not specified! Please specify the file path"
+          << std::endl;
+      std::cout << desc << std::endl;
+      return 1;
+    }
+
+    if (vm.count("fs")) {
+      std::cout << "Fragment shader path: " << FRAGMENT_SHADER_PATH
+                << std::endl;
+    } else {
+      std::cout
+          << "Fragment shader was not specified! Please specify the file path"
+          << std::endl;
+      return 1;
+    }
+
+    if (vm.count("obj")) {
+      std::cout << "OBJ model path: " << MODEL_PATH << std::endl;
+    } else {
+      std::cout
+          << "OBJ model file was not specified! Please specify the file path"
+          << std::endl;
+      return 1;
+    }
+
+    if (vm.count("tex")) {
+      std::cout << "Texture file path: " << TEXTURE_PATH << std::endl;
+    } else {
+      std::cout << "Texture file path was not specified! Please specify the path" << std::endl;
+      return 1;
+    }
+
+    return 0;
   }
 
   void drawFrame() {
@@ -390,7 +414,8 @@ class App {
     uniformBuffers.resize(swapChainImageSize);
 
     for (size_t i = 0; i < swapChainImageSize; i++) {
-      uniformBuffers[i] = UniformBuffer(*deviceManager, swapChainImageSize, bufferSize);
+      uniformBuffers[i] =
+          UniformBuffer(*deviceManager, swapChainImageSize, bufferSize);
     }
   }
 
@@ -541,13 +566,62 @@ class App {
     auto app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
     app->framebufferResized = true;
   }
+
+  GLFWwindow* window;
+
+  std::unique_ptr<odin::Instance> instance;
+  VkSurfaceKHR surface;
+
+  std::unique_ptr<DeviceManager> deviceManager;
+
+  std::unique_ptr<Swapchain> swapChain;
+
+  std::unique_ptr<RenderPass> renderPass;
+
+  std::unique_ptr<Pipeline> graphicsPipeline;
+
+  std::unique_ptr<CommandPool> commandPool;
+
+  std::vector<VkSemaphore> imageAvailableSemaphores;
+  std::vector<VkSemaphore> renderFinishedSemaphores;
+  std::vector<VkFence> inFlightFences;
+  size_t currentFrame = 0;
+
+  bool framebufferResized = false;
+
+  std::vector<Vertex> vertices;
+  std::unique_ptr<VertexBuffer> vertexBuffer;
+
+  std::vector<uint32_t> indices;
+  std::unique_ptr<IndexBuffer> indexBuffer;
+
+  std::vector<UniformBuffer> uniformBuffers;
+
+  std::unique_ptr<DescriptorSetLayout> descriptorSetLayout;
+  std::unique_ptr<DescriptorPool> descriptorPool;
+
+  std::unique_ptr<TextureImage> textureImage;
+  std::unique_ptr<TextureSampler> textureSampler;
+
+  std::unique_ptr<DepthImage> depthImage;
+
+  VkPipelineStageFlags sourceStage;
+  VkPipelineStageFlags destinationStage;
+
+  const int WIDTH = 800;
+  const int HEIGHT = 600;
+  const int MAX_FRAMES_IN_FLIGHT = 2;
+
+  static std::string FRAGMENT_SHADER_PATH;
+  static std::string VERTEX_SHADER_PATH;
+  static std::string MODEL_PATH;
+  static std::string TEXTURE_PATH;
 };
 }  // namespace odin
 
-int main() {
-  odin::App app;
-
+int main(int argc, char* argv[]) {
   try {
+    odin::App app(argc, argv);
     app.run();
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;

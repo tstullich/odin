@@ -5,6 +5,7 @@ enable_language(CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_SUPPRESS_REGENERATION true)
 
+find_package(Boost 1.69 COMPONENTS program_options REQUIRED)
 find_package(glfw3 3.2 REQUIRED)
 find_package(Vulkan REQUIRED)
 
@@ -31,6 +32,7 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     endif()
 endif()
 
+include_directories(${Boost_INCLUDE_DIR})
 include_directories(${VULKAN_INCLUDE_DIR})
 include_directories(${STB_INCLUDE_DIR})
 include_directories(${TINY_OBJ_INCLUDE_DIR})
