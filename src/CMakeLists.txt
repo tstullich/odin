@@ -6,7 +6,7 @@ set(SOURCE_FILES
     vk/device_manager.cpp
     vk/swapchain.cpp
     vk/render_pass.cpp
-    vk/pipeline.cpp
+    vk/graphics_pipeline.cpp
     vk/shader_module.cpp
     vk/command_pool.cpp
     vk/image.cpp
@@ -19,6 +19,7 @@ set(SOURCE_FILES
     vk/texture_sampler.cpp
     vk/descriptor_set_layout.cpp
     vk/descriptor_pool.cpp
+    vk/compute_pipeline.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})

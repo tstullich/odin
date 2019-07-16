@@ -38,7 +38,8 @@ void odin::DeviceManager::createLogicalDevice(const Instance& instance,
   QueueFamilyIndices indices = findQueueFamilies(surface);
 
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-  std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(),
+  std::set<uint32_t> uniqueQueueFamilies = {indices.computeFamily.value(),
+                                            indices.graphicsFamily.value(),
                                             indices.presentFamily.value()};
 
   float queuePriority = 1.0f;
@@ -81,8 +82,12 @@ void odin::DeviceManager::createLogicalDevice(const Instance& instance,
     throw std::runtime_error("Failed to create logical device!");
   }
 
-  vkGetDeviceQueue(logicalDevice, indices.graphicsFamily.value(), 0, &graphicsQueue);
-  vkGetDeviceQueue(logicalDevice, indices.presentFamily.value(), 0, &presentQueue);
+  vkGetDeviceQueue(logicalDevice, indices.computeFamily.value(), 0,
+                   &computeQueue);
+  vkGetDeviceQueue(logicalDevice, indices.graphicsFamily.value(), 0,
+                   &graphicsQueue);
+  vkGetDeviceQueue(logicalDevice, indices.presentFamily.value(), 0,
+                   &presentQueue);
 }
 
 // Helper function to allow access to queue family indices without having
@@ -94,30 +99,39 @@ odin::QueueFamilyIndices odin::DeviceManager::findQueueFamilies(
 }
 
 odin::QueueFamilyIndices odin::DeviceManager::findQueueFamilies(
-    VkPhysicalDevice pDevice, VkSurfaceKHR surface) {
+    VkPhysicalDevice physicalDevice, VkSurfaceKHR surface) {
   // Check if physical device has been initialized
-  if (pDevice == VK_NULL_HANDLE) {
+  if (physicalDevice == VK_NULL_HANDLE) {
     throw std::runtime_error("Physical device has not been initialized!");
   }
 
   odin::QueueFamilyIndices indices;
 
   uint32_t queueFamilyCount = 0;
-  vkGetPhysicalDeviceQueueFamilyProperties(pDevice, &queueFamilyCount, nullptr);
+  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount,
+                                           nullptr);
 
   std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-  vkGetPhysicalDeviceQueueFamilyProperties(pDevice, &queueFamilyCount,
+  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount,
                                            queueFamilies.data());
 
   int i = 0;
   for (const auto& queueFamily : queueFamilies) {
+    // Find a queue that only supports graphics
     if (queueFamily.queueCount > 0 &&
         queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
       indices.graphicsFamily = i;
     }
 
+    // Find a queue that only supports compute
+    if (queueFamily.queueCount > 0 &&
+        queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT) {
+      indices.computeFamily = i;
+    }
+
     VkBool32 presentSupport = false;
-    vkGetPhysicalDeviceSurfaceSupportKHR(pDevice, i, surface, &presentSupport);
+    vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface,
+                                         &presentSupport);
 
     if (queueFamily.queueCount > 0 && presentSupport) {
       indices.presentFamily = i;
@@ -133,10 +147,16 @@ odin::QueueFamilyIndices odin::DeviceManager::findQueueFamilies(
   return indices;
 }
 
-const VkDevice odin::DeviceManager::getLogicalDevice() const { return logicalDevice; }
+const VkQueue odin::DeviceManager::getComputeQueue() const {
+  return computeQueue;
+}
 
 const VkQueue odin::DeviceManager::getGraphicsQueue() const {
   return graphicsQueue;
+}
+
+const VkDevice odin::DeviceManager::getLogicalDevice() const {
+  return logicalDevice;
 }
 
 const VkPhysicalDevice odin::DeviceManager::getPhysicalDevice() const {

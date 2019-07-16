@@ -154,9 +154,9 @@ void odin::Application::createFrameBuffers() {
 }
 
 void odin::Application::createGraphicsPipeline() {
-  graphicsPipeline =
-      std::make_unique<Pipeline>(deviceManager->getLogicalDevice(), *swapChain,
-                                 *renderPass, *descriptorSetLayout);
+  graphicsPipeline = std::make_unique<GraphicsPipeline>(
+      deviceManager->getLogicalDevice(), *swapChain, *renderPass,
+      *descriptorSetLayout);
 }
 
 // TODO Look into packing vertex data and vertex indices into one

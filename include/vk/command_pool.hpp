@@ -17,7 +17,7 @@ namespace odin {
 
 // Forward declarations
 class IndexBuffer;
-class Pipeline;
+class GraphicsPipeline;
 class VertexBuffer;
 
 class CommandPool {
@@ -32,7 +32,7 @@ class CommandPool {
 
   void createCommandBuffers(const VkDevice& logicalDevice,
                             const RenderPass& renderPass,
-                            const Pipeline& graphicsPipeline,
+                            const GraphicsPipeline& graphicsPipeline,
                             const Swapchain& swapChain,
                             const IndexBuffer& indexBuffer,
                             const VertexBuffer& vertexBuffer,

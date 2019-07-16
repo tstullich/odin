@@ -1,17 +1,17 @@
-#include "vk/pipeline.hpp"
+#include "vk/graphics_pipeline.hpp"
 
-odin::Pipeline::Pipeline(const VkDevice& logicalDevice,
+odin::GraphicsPipeline::GraphicsPipeline(const VkDevice& logicalDevice,
                          const Swapchain& swapChain,
                          const RenderPass& renderPass,
                          const DescriptorSetLayout& descriptorSetLayout) {
   createPipeline(logicalDevice, swapChain, renderPass, descriptorSetLayout);
 }
 
-odin::Pipeline::~Pipeline() {
-  std::cout << "MUST IMPLEMENT PIPELINE DESTRUCTOR!" << std::endl;
+odin::GraphicsPipeline::~GraphicsPipeline() {
+  std::cout << "IMPLEMENT PIPELINE DESTRUCTOR!" << std::endl;
 }
 
-void odin::Pipeline::createPipeline(
+void odin::GraphicsPipeline::createPipeline(
     const VkDevice& logicalDevice, const Swapchain& swapChain,
     const RenderPass& renderPass,
     const DescriptorSetLayout& descriptorSetLayout) {
@@ -175,6 +175,7 @@ void odin::Pipeline::createPipeline(
   pipelineInfo.renderPass = renderPass.getRenderPass();
   pipelineInfo.subpass = 0;
   pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+  pipelineInfo.pNext = VK_NULL_HANDLE;
 
   if (vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo,
                                 nullptr, &graphicsPipeline) != VK_SUCCESS) {
@@ -182,10 +183,10 @@ void odin::Pipeline::createPipeline(
   }
 }
 
-const VkPipeline odin::Pipeline::getGraphicsPipeline() const {
+const VkPipeline odin::GraphicsPipeline::getGraphicsPipeline() const {
   return graphicsPipeline;
 }
 
-const VkPipelineLayout odin::Pipeline::getPipelineLayout() const {
+const VkPipelineLayout odin::GraphicsPipeline::getPipelineLayout() const {
   return pipelineLayout;
 }

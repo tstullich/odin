@@ -19,9 +19,11 @@ namespace odin {
 struct QueueFamilyIndices {
   std::optional<uint32_t> graphicsFamily;
   std::optional<uint32_t> presentFamily;
+  std::optional<uint32_t> computeFamily;
 
   bool isComplete() {
-    return graphicsFamily.has_value() && presentFamily.has_value();
+    return graphicsFamily.has_value() && presentFamily.has_value() &&
+           computeFamily.has_value();
   }
 };
 
@@ -40,9 +42,11 @@ class DeviceManager {
 
   QueueFamilyIndices findQueueFamilies(VkSurfaceKHR surface);
 
-  const VkDevice getLogicalDevice() const;
+  const VkQueue getComputeQueue() const;
 
   const VkQueue getGraphicsQueue() const;
+
+  const VkDevice getLogicalDevice() const;
 
   const VkPhysicalDevice getPhysicalDevice() const;
 
@@ -74,6 +78,7 @@ class DeviceManager {
   VkDevice logicalDevice;
   VkQueue graphicsQueue;
   VkQueue presentQueue;
+  VkQueue computeQueue;
 };
 }  // namespace odin
 #endif  // ODIN_DEVICE_MANAGER_HPP

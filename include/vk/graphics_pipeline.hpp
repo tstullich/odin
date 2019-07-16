@@ -1,5 +1,5 @@
-#ifndef ODIN_PIPELINE_HPP
-#define ODIN_PIPELINE_HPP
+#ifndef ODIN_GRAPHICS_PIPELINE_HPP
+#define ODIN_GRAPHICS_PIPELINE_HPP
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -13,13 +13,13 @@
 #include "vk/swapchain.hpp"
 
 namespace odin {
-class Pipeline {
+class GraphicsPipeline {
  public:
-  Pipeline(const VkDevice& logicalDevice, const Swapchain& swapChain,
-           const RenderPass& renderPass,
-           const DescriptorSetLayout& descriptorSetLayout);
+  GraphicsPipeline(const VkDevice& logicalDevice, const Swapchain& swapChain,
+                   const RenderPass& renderPass,
+                   const DescriptorSetLayout& descriptorSetLayout);
 
-  ~Pipeline();
+  ~GraphicsPipeline();
 
   const VkPipeline getGraphicsPipeline() const;
 
@@ -34,4 +34,4 @@ class Pipeline {
   VkPipelineLayout pipelineLayout;
 };
 }  // namespace odin
-#endif  // ODIN_PIPELINE_HPP
+#endif  // ODIN_GRAPHICS_PIPELINE_HPP

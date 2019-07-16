@@ -1,5 +1,5 @@
 #include "vk/command_pool.hpp"
-#include "vk/pipeline.hpp"
+#include "vk/graphics_pipeline.hpp"
 #include "vk/index_buffer.hpp"
 #include "vk/vertex_buffer.hpp"
 
@@ -18,7 +18,7 @@ odin::CommandPool::CommandPool(
 }
 
 odin::CommandPool::~CommandPool() {
-  std::cout << "MUST IMPLEMENT COMMAND POOL DESTRUCTOR!" << std::endl;
+  std::cout << "IMPLEMENT COMMAND POOL DESTRUCTOR!" << std::endl;
 }
 
 const VkCommandBuffer odin::CommandPool::beginSingleTimeCommands(
@@ -43,7 +43,7 @@ const VkCommandBuffer odin::CommandPool::beginSingleTimeCommands(
 
 void odin::CommandPool::createCommandBuffers(
     const VkDevice& logicalDevice, const RenderPass& renderPass,
-    const Pipeline& graphicsPipeline, const Swapchain& swapChain,
+    const GraphicsPipeline& graphicsPipeline, const Swapchain& swapChain,
     const IndexBuffer& indexBuffer, const VertexBuffer& vertexBuffer,
     const std::vector<VkDescriptorSet>& descriptorSets) {
   commandBuffers.resize(swapChain.getFrameBufferSizes());

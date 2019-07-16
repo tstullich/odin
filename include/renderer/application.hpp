@@ -35,7 +35,7 @@
 #include "vk/device_manager.hpp"
 #include "vk/index_buffer.hpp"
 #include "vk/instance.hpp"
-#include "vk/pipeline.hpp"
+#include "vk/graphics_pipeline.hpp"
 #include "vk/render_pass.hpp"
 #include "vk/swapchain.hpp"
 #include "vk/texture_image.hpp"
@@ -135,7 +135,7 @@ class Application {
 
   std::unique_ptr<RenderPass> renderPass;
 
-  std::unique_ptr<Pipeline> graphicsPipeline;
+  std::unique_ptr<GraphicsPipeline> graphicsPipeline;
 
   std::unique_ptr<CommandPool> commandPool;
 
