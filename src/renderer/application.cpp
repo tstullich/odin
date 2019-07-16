@@ -6,6 +6,7 @@
 namespace po = boost::program_options;
 
 // Exposing static members for usage in other classes
+std::string odin::Application::COMPUTE_SHADER_PATH;
 std::string odin::Application::FRAGMENT_SHADER_PATH;
 std::string odin::Application::VERTEX_SHADER_PATH;
 std::string odin::Application::MODEL_PATH;
@@ -403,6 +404,9 @@ void odin::Application::mainLoop() {
 int odin::Application::parseArguments(int argc, char* argv[]) {
   po::options_description desc("Allowed options");
   desc.add_options()("help", "Produce help message")(
+      "demo", "Runs renderer with pre-defined values")(
+      "cs", po::value<std::string>(&COMPUTE_SHADER_PATH),
+      "Compute shader path (SPIR-V)")(
       "vs", po::value<std::string>(&VERTEX_SHADER_PATH),
       "Vertex shader path (SPIR-V)")(
       "fs", po::value<std::string>(&FRAGMENT_SHADER_PATH),
@@ -415,6 +419,27 @@ int odin::Application::parseArguments(int argc, char* argv[]) {
   po::notify(vm);
 
   if (vm.count("help")) {
+    std::cout << desc << std::endl;
+    return 1;
+  }
+
+  // Check if we have enabled demo mode
+  if (vm.count("demo")) {
+    std::cout << "Running in demo mode" << std::endl;
+    COMPUTE_SHADER_PATH = "shaders/comp.spv";
+    FRAGMENT_SHADER_PATH = "shaders/frag.spv";
+    VERTEX_SHADER_PATH = "shaders/vert.spv";
+    MODEL_PATH = "models/triangle.obj";
+    TEXTURE_PATH = "textures/texture.jpg";
+    return 0;
+  }
+
+  if (vm.count("cs")) {
+    std::cout << "Compute shader path: " << COMPUTE_SHADER_PATH << std::endl;
+  } else {
+    std::cout
+        << "Compute shader was not specified! Please specify the file path"
+        << std::endl;
     std::cout << desc << std::endl;
     return 1;
   }

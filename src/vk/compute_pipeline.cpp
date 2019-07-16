@@ -17,7 +17,10 @@ const VkPipelineLayout odin::ComputePipeline::getPipelineLayout() const {
 }
 
 void odin::ComputePipeline::createPipeline(const DeviceManager& deviceManager) {
-  // Setup compute shader layout
+  // Load compute shader
+  auto computeShaderCode = FileReader::readFile(odin::Application::COMPUTE_SHADER_PATH);
+
+  // Setup compute pipeline layout
   VkPipelineLayoutCreateInfo layoutCreateInfo;
 
   // Setup compute pipeline

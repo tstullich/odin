@@ -7,6 +7,8 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "renderer/application.hpp"
+#include "utils/file_reader.hpp"
 #include "vk/device_manager.hpp"
 
 namespace odin {

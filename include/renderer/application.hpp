@@ -60,6 +60,7 @@ class Application {
 
   void run();
 
+  static std::string COMPUTE_SHADER_PATH;
   static std::string FRAGMENT_SHADER_PATH;
   static std::string VERTEX_SHADER_PATH;
   static std::string MODEL_PATH;
