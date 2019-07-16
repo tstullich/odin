@@ -117,16 +117,12 @@ odin::QueueFamilyIndices odin::DeviceManager::findQueueFamilies(
 
   int i = 0;
   for (const auto& queueFamily : queueFamilies) {
-    // Find a queue that only supports graphics
+    // Find a command queue that supports graphics and compute
     if (queueFamily.queueCount > 0 &&
-        queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-      indices.graphicsFamily = i;
-    }
-
-    // Find a queue that only supports compute
-    if (queueFamily.queueCount > 0 &&
+        queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT &&
         queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT) {
       indices.computeFamily = i;
+      indices.graphicsFamily = i;
     }
 
     VkBool32 presentSupport = false;
