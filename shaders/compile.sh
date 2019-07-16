@@ -8,4 +8,5 @@ if ! [ $VALIDATOR_PATH ]; then
   exit 1
 fi
 
-$VALIDATOR_PATH -V *.frag *.vert
+# By GLSL convention we search for the following files that have the given extensions below
+find . -type f \( -name "*.glsl" -o -name "*.comp" -o -name "*.frag" -o -name "*.vert" \) | sed -e 's,^\./,,' | xargs $VALIDATOR_PATH -V
