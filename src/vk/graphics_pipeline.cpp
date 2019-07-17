@@ -1,9 +1,9 @@
 #include "vk/graphics_pipeline.hpp"
 
-odin::GraphicsPipeline::GraphicsPipeline(const VkDevice& logicalDevice,
-                         const Swapchain& swapChain,
-                         const RenderPass& renderPass,
-                         const DescriptorSetLayout& descriptorSetLayout) {
+odin::GraphicsPipeline::GraphicsPipeline(
+    const VkDevice& logicalDevice, const Swapchain& swapChain,
+    const RenderPass& renderPass,
+    const DescriptorSetLayout& descriptorSetLayout) {
   createPipeline(logicalDevice, swapChain, renderPass, descriptorSetLayout);
 }
 
@@ -156,7 +156,7 @@ void odin::GraphicsPipeline::createPipeline(
 
   if (vkCreatePipelineLayout(logicalDevice, &pipelineLayoutInfo, nullptr,
                              &pipelineLayout) != VK_SUCCESS) {
-    throw std::runtime_error("Failed to create pipeline layout!");
+    throw std::runtime_error("Failed to create graphics pipeline layout!");
   }
 
   // Combine all components into our final graphics pipeline
