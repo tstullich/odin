@@ -1,5 +1,5 @@
-#include "renderer/ubo.hpp"
 #include "vk/descriptor_pool.hpp"
+#include "renderer/ubo.hpp"
 
 odin::DescriptorPool::DescriptorPool(
     const DeviceManager& deviceManager, const Swapchain& swapChain,
@@ -7,8 +7,8 @@ odin::DescriptorPool::DescriptorPool(
     const std::vector<UniformBuffer>& uniformBuffers,
     const TextureImage& textureImage, const TextureSampler& textureSampler) {
   createDescriptorPool(deviceManager, swapChain);
-  createDescriptorSets(deviceManager, swapChain, descriptorSetLayout,
-                       uniformBuffers, textureImage, textureSampler);
+  createGraphicsDescriptorSets(deviceManager, swapChain, descriptorSetLayout,
+                               uniformBuffers, textureImage, textureSampler);
 }
 
 odin::DescriptorPool::~DescriptorPool() {
@@ -22,6 +22,18 @@ const VkDescriptorPool odin::DescriptorPool::getDescriptorPool() const {
 const std::vector<VkDescriptorSet> odin::DescriptorPool::getDescriptorSets()
     const {
   return descriptorSets;
+}
+
+void odin::DescriptorPool::createComputeDescriptorSets(
+    const DeviceManager& deviceManager, const Swapchain& swapChain) {
+  // Setup descriptor set pool sizes
+  std::array<VkDescriptorPoolSize, 3> poolSizes = {};
+  poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  poolSizes[0].descriptorCount =
+      static_cast<uint32_t>(swapChain.getImageSize());
+  // The descriptor for the output image from the compute shader
+  poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+  poolSizes[1].descriptorCount = 1;
 }
 
 void odin::DescriptorPool::createDescriptorPool(
@@ -47,7 +59,7 @@ void odin::DescriptorPool::createDescriptorPool(
   }
 }
 
-void odin::DescriptorPool::createDescriptorSets(
+void odin::DescriptorPool::createGraphicsDescriptorSets(
     const DeviceManager& deviceManager, const Swapchain& swapChain,
     const DescriptorSetLayout& descriptorSetLayout,
     const std::vector<UniformBuffer>& uniformBuffers,

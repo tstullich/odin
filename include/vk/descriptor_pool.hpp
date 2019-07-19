@@ -32,15 +32,17 @@ class DescriptorPool {
   const std::vector<VkDescriptorSet> getDescriptorSets() const;
 
  private:
+  void createComputeDescriptorSets(const DeviceManager& deviceManager,
+                                   const Swapchain& swapChain);
+
   void createDescriptorPool(const DeviceManager& deviceManager,
                             const Swapchain& swapChain);
 
-  void createDescriptorSets(const DeviceManager& deviceManager,
-                            const Swapchain& swapChain,
-                            const DescriptorSetLayout& descriptorSetLayout,
-                            const std::vector<UniformBuffer>& uniformBuffers,
-                            const TextureImage& textureImage,
-                            const TextureSampler& textureSampler);
+  void createGraphicsDescriptorSets(
+      const DeviceManager& deviceManager, const Swapchain& swapChain,
+      const DescriptorSetLayout& descriptorSetLayout,
+      const std::vector<UniformBuffer>& uniformBuffers,
+      const TextureImage& textureImage, const TextureSampler& textureSampler);
 
   VkDescriptorPool descriptorPool;
   std::vector<VkDescriptorSet> descriptorSets;
