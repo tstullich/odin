@@ -14,7 +14,7 @@
 namespace odin {
 class TextureSampler {
  public:
-  TextureSampler(const DeviceManager& deviceManager, const uint32_t mipLevels);
+  TextureSampler(const DeviceManager& deviceManager);
 
   ~TextureSampler();
 

@@ -71,8 +71,7 @@ void odin::TextureImage::createTextureImage(const DeviceManager& deviceManager,
 void odin::TextureImage::createTextureImageView(
     const DeviceManager& deviceManager, const Swapchain& swapChain) {
   textureImageView = swapChain.createImageView(deviceManager.getLogicalDevice(),
-                                               image, VK_FORMAT_R8G8B8A8_UNORM,
-                                               VK_IMAGE_ASPECT_COLOR_BIT);
+                                               image, VK_FORMAT_R8G8B8A8_UNORM);
 }
 
 const VkImage odin::TextureImage::getTextureImage() const { return image; }
