@@ -17,7 +17,7 @@ namespace odin {
 class ComputePipeline {
  public:
   ComputePipeline(const DeviceManager& deviceManager,
-                  const DescriptorSetLayout& descriptoSetLayout);
+                  const DescriptorSetLayout& descriptorSetLayout);
 
   ~ComputePipeline();
 

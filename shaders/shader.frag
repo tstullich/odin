@@ -4,7 +4,6 @@
  * The fragment shader samples the texture image from
  * the compute shader to determine the final color value
  */
-
 layout (binding = 0) uniform sampler2D samplerColor;
 
 layout (location = 0) in vec2 inUV;

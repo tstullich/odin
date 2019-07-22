@@ -129,6 +129,11 @@ void odin::Application::createCommandPool() {
                                     deviceManager->findQueueFamilies(surface));
 }
 
+void odin::Application::createComputePipeline() {
+  computePipeline = std::make_unique<ComputePipeline>(
+      *deviceManager, computeDescriptorSetLayout);
+}
+
 void odin::Application::createDepthResources() {
   depthImage =
       std::make_unique<DepthImage>(*deviceManager, *commandPool, *swapChain);
@@ -141,8 +146,12 @@ void odin::Application::createDescriptorPool() {
       *textureImage, *textureSampler);
 }
 
-void odin::Application::createDescriptorSetLayout() {
-  descriptorSetLayout = std::make_unique<DescriptorSetLayout>(*deviceManager);
+void odin::Application::createDescriptorSetLayouts() {
+  computeDescriptorSetLayout =
+      std::make_unique<DescriptorSetLayout>(*deviceManager, true);
+
+  graphicsDescriptorSetLayout =
+      std::make_unique<DescriptorSetLayout>(*deviceManager, false);
 }
 
 void odin::Application::createDeviceManager() {
@@ -158,7 +167,7 @@ void odin::Application::createFrameBuffers() {
 void odin::Application::createGraphicsPipeline() {
   graphicsPipeline = std::make_unique<GraphicsPipeline>(
       deviceManager->getLogicalDevice(), *swapChain, *renderPass,
-      *descriptorSetLayout);
+      *graphicsDescriptorSetLayout);
 }
 
 // TODO Look into packing vertex data and vertex indices into one
@@ -320,6 +329,7 @@ void odin::Application::initVulkan() {
   createSwapChain();
   createRenderPass();
   createDescriptorSetLayout();
+  createComputePipeline();
   createGraphicsPipeline();
   createCommandPool();
   createDepthResources();

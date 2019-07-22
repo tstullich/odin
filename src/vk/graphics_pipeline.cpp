@@ -21,7 +21,7 @@ void odin::GraphicsPipeline::createPipeline(
   auto fragShaderCode =
       FileReader::readFile(odin::Application::FRAGMENT_SHADER_PATH);
 
-  // Create VkShaderModules around the shaders
+  // Create shader module wrappers
   ShaderModule vertShaderModule(logicalDevice, vertShaderCode);
   ShaderModule fragShaderModule(logicalDevice, fragShaderCode);
 
@@ -49,47 +49,32 @@ void odin::GraphicsPipeline::createPipeline(
   auto attributeDescriptions = odin::Vertex::getAttributeDescriptions();
 
   // Configure how vertices are treated in the pipeline
+  // Here we simply want an empty input since the actual vertices are
+  // only needed in the compute shader
   VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
   vertexInputInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertexInputInfo.vertexBindingDescriptionCount = 1;
-  vertexInputInfo.vertexAttributeDescriptionCount =
-      static_cast<uint32_t>(attributeDescriptions.size());
-  vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-  vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+  vertexInputInfo.vertexAttributeDescriptionCount = 0;
+  vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+  vertexInputInfo.vertexBindingDescriptionCount = 0;
+  vertexInputInfo.pVertexBindingDescriptions = nullptr;
 
   // Configure vertex layout. Treat three consecutive vertices as a triangle
   VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
   inputAssembly.sType =
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+  inputAssembly.flags = 0;
   inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
   inputAssembly.primitiveRestartEnable = VK_FALSE;
-
-  // Configure the viewport
-  VkViewport viewport = {};
-  viewport.x = 0.0f;
-  viewport.y = 0.0f;
-  // It's suggested to not use the WIDTH and HEIGHT constants
-  // and instead opt to retrieve these values from the swap chain
-  auto swapChainExtent = swapChain.getExtent();
-  viewport.width = static_cast<uint32_t>(swapChainExtent.width);
-  viewport.height = static_cast<uint32_t>(swapChainExtent.height);
-  viewport.minDepth = 0.0f;
-  viewport.maxDepth = 1.0f;
-
-  // Configure the scissor rectangle which is used by the rasterizer
-  // what fragments to discard during rendering
-  VkRect2D scissor = {};
-  scissor.offset = {0, 0};
-  scissor.extent = swapChainExtent;
 
   // Combine viewport and scissor into a viewport state
   VkPipelineViewportStateCreateInfo viewportState = {};
   viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+  viewportState.flags = 0;
   viewportState.viewportCount = 1;
-  viewportState.pViewports = &viewport;
+  // viewportState.pViewports = &viewport;
   viewportState.scissorCount = 1;
-  viewportState.pScissors = &scissor;
+  // viewportState.pScissors = &scissor;
 
   // Configure the rasterizer
   VkPipelineRasterizationStateCreateInfo rasterizer = {};
@@ -100,7 +85,7 @@ void odin::GraphicsPipeline::createPipeline(
   rasterizer.rasterizerDiscardEnable = VK_FALSE;
   rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
   rasterizer.lineWidth = 1.0f;
-  rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+  rasterizer.cullMode = VK_CULL_MODE_FRONT_BIT;
   rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -110,42 +95,43 @@ void odin::GraphicsPipeline::createPipeline(
       VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
   multisampling.sampleShadingEnable = VK_FALSE;
   multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+  multisampling.flags = 0;
 
   // Enables depth testing
   VkPipelineDepthStencilStateCreateInfo depthStencil = {};
   depthStencil.sType =
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-  depthStencil.depthTestEnable = VK_TRUE;
-  depthStencil.depthWriteEnable = VK_TRUE;
+  depthStencil.depthTestEnable = VK_FALSE;
+  depthStencil.depthWriteEnable = VK_FALSE;
   // The lower the depth value the close it is to the viewer
-  depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-  depthStencil.depthBoundsTestEnable = VK_FALSE;
-  depthStencil.stencilTestEnable = VK_FALSE;
-  depthStencil.minDepthBounds = 0.0f;
-  depthStencil.maxDepthBounds = 1.0f;
+  depthStencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+  depthStencil.front = depthStencil.back;
+  depthStencil.back.compareOp = VK_COMPARE_OP_ALWAYS;
 
   // Configure color blending based on one framebuffer. For multiple
   // framebuffers other settings need to be enabled. Right now it is
   // disabled but can be useful for alpha blending later on
   VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-  colorBlendAttachment.colorWriteMask =
-      VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-      VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+  colorBlendAttachment.colorWriteMask = VK_BLEND_FACTOR_SRC1_COLOR;
   colorBlendAttachment.blendEnable = VK_FALSE;
 
   // Set constants for final color blending. Disabled for now
   VkPipelineColorBlendStateCreateInfo colorBlending = {};
   colorBlending.sType =
       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-  // For bitwise blending set this to VK_TRUE, but will disable blendEnable
-  colorBlending.logicOpEnable = VK_FALSE;
-  colorBlending.logicOp = VK_LOGIC_OP_COPY;
   colorBlending.attachmentCount = 1;
   colorBlending.pAttachments = &colorBlendAttachment;
-  colorBlending.blendConstants[0] = 0.0f;
-  colorBlending.blendConstants[1] = 0.0f;
-  colorBlending.blendConstants[2] = 0.0f;
-  colorBlending.blendConstants[3] = 0.0f;
+
+  // Setup dynamic states for the viewport and scissor
+  std::array<VkDynamicState, 2> dynamicStateEnables = {
+      VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+
+  VkPipelineDynamicStateCreateInfo dynamicStates = {};
+  dynamicStates.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+  dynamicStates.pDynamicStates = dynamicStateEnables.data();
+  dynamicStates.dynamicStateCount =
+      static_cast<uint32_t>(dynamicStateEnables.size());
+  dynamicStates.flags = 0;
 
   // Create our pipeline layout. This is also the point where later on
   // uniforms can be bound for use in our shaders
@@ -171,6 +157,7 @@ void odin::GraphicsPipeline::createPipeline(
   pipelineInfo.pMultisampleState = &multisampling;
   pipelineInfo.pColorBlendState = &colorBlending;
   pipelineInfo.pDepthStencilState = &depthStencil;
+  pipelineInfo.pDynamicState = &dynamicStates;
   pipelineInfo.layout = pipelineLayout;
   pipelineInfo.renderPass = renderPass.getRenderPass();
   pipelineInfo.subpass = 0;

@@ -13,14 +13,16 @@
 namespace odin {
 class DescriptorSetLayout {
  public:
-  DescriptorSetLayout(const DeviceManager& deviceManager);
+  DescriptorSetLayout(const DeviceManager& deviceManager, bool computePipeline);
 
   ~DescriptorSetLayout();
 
   const VkDescriptorSetLayout* getDescriptorSetLayout() const;
 
  private:
-  void createDescriptorSetLayout(const DeviceManager& deviceManager);
+  void createComputeDescriptorSetLayout(const DeviceManager& deviceManager);
+
+  void createGraphicsDescriptorSetLayout(const DeviceManager& deviceManager);
 
   VkDescriptorSetLayout descriptorSetLayout;
 };

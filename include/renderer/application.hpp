@@ -29,6 +29,7 @@
 
 #include "renderer/ubo.hpp"
 #include "renderer/vertex.hpp"
+#include "vk/compute_pipeline.hpp"
 #include "vk/depth_image.hpp"
 #include "vk/descriptor_pool.hpp"
 #include "vk/descriptor_set_layout.hpp"
@@ -79,11 +80,13 @@ class Application {
 
   void createCommandPool();
 
+  void createComputePipeline();
+
   void createDepthResources();
 
   void createDescriptorPool();
 
-  void createDescriptorSetLayout();
+  void createDescriptorSetLayouts();
 
   void createDeviceManager();
 
@@ -138,6 +141,7 @@ class Application {
 
   std::unique_ptr<RenderPass> renderPass;
 
+  std::unique_ptr<ComputePipeline> computePipeline;
   std::unique_ptr<GraphicsPipeline> graphicsPipeline;
 
   std::unique_ptr<CommandPool> commandPool;
@@ -157,7 +161,8 @@ class Application {
 
   std::unique_ptr<UniformBuffer> computeUbo;
 
-  std::unique_ptr<DescriptorSetLayout> descriptorSetLayout;
+  std::unique_ptr<DescriptorSetLayout> computeDescriptorSetLayout;
+  std::unique_ptr<DescriptorSetLayout> graphicsDescriptorSetLayout;
   std::unique_ptr<DescriptorPool> descriptorPool;
 
   std::unique_ptr<TextureImage> textureImage;
