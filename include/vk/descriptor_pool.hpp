@@ -4,10 +4,10 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include <array>
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
-#include <vector>
 
 #include "vk/descriptor_set_layout.hpp"
 #include "vk/device_manager.hpp"
@@ -20,7 +20,8 @@ namespace odin {
 class DescriptorPool {
  public:
   DescriptorPool(const DeviceManager& deviceManager, const Swapchain& swapChain,
-                 const DescriptorSetLayout& descriptorSetLayout,
+                 const DescriptorSetLayout& computeDescriptorSetLayout,
+                 const DescriptorSetLayout& graphicsDescriptorSetLayout,
                  const std::vector<UniformBuffer>& uniformBuffers,
                  const TextureImage& textureImage,
                  const TextureSampler& textureSampler);
@@ -29,23 +30,25 @@ class DescriptorPool {
 
   const VkDescriptorPool getDescriptorPool() const;
 
-  const std::vector<VkDescriptorSet> getDescriptorSets() const;
+  const VkDescriptorSet getDescriptorSet() const;
 
  private:
-  void createComputeDescriptorSets(const DeviceManager& deviceManager,
-                                   const Swapchain& swapChain);
+  void createComputeDescriptorSets(
+      const DeviceManager& deviceManager,
+      const DescriptorSetLayout& descriptorSetLayout,
+      const Swapchain& swapChain);
 
   void createDescriptorPool(const DeviceManager& deviceManager,
                             const Swapchain& swapChain);
 
   void createGraphicsDescriptorSets(
-      const DeviceManager& deviceManager, const Swapchain& swapChain,
+      const DeviceManager& deviceManager,
       const DescriptorSetLayout& descriptorSetLayout,
       const std::vector<UniformBuffer>& uniformBuffers,
       const TextureImage& textureImage, const TextureSampler& textureSampler);
 
   VkDescriptorPool descriptorPool;
-  std::vector<VkDescriptorSet> descriptorSets;
+  VkDescriptorSet descriptorSet;
 };
 }  // namespace odin
 #endif  // ODIN_DESCRIPTOR_POOL_HPP

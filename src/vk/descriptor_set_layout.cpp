@@ -1,8 +1,8 @@
 #include "vk/descriptor_set_layout.hpp"
 
 odin::DescriptorSetLayout::DescriptorSetLayout(
-    const DeviceManager& deviceManager, bool computePipeline) {
-  if (computePipeline) {
+    const DeviceManager& deviceManager, bool computeDescriptorSet) {
+  if (computeDescriptorSet) {
     createComputeDescriptorSetLayout(deviceManager);
   } else {
     createGraphicsDescriptorSetLayout(deviceManager);

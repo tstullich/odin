@@ -13,7 +13,7 @@
 namespace odin {
 class DescriptorSetLayout {
  public:
-  DescriptorSetLayout(const DeviceManager& deviceManager, bool computePipeline);
+  DescriptorSetLayout(const DeviceManager& deviceManager, bool computeDescriptorSet);
 
   ~DescriptorSetLayout();
 

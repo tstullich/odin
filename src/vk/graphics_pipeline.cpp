@@ -72,9 +72,7 @@ void odin::GraphicsPipeline::createPipeline(
   viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
   viewportState.flags = 0;
   viewportState.viewportCount = 1;
-  // viewportState.pViewports = &viewport;
   viewportState.scissorCount = 1;
-  // viewportState.pScissors = &scissor;
 
   // Configure the rasterizer
   VkPipelineRasterizationStateCreateInfo rasterizer = {};

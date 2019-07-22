@@ -42,6 +42,7 @@ void odin::ComputePipeline::createPipeline(
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 1;
   pipelineLayoutInfo.pSetLayouts = descriptorSetLayout.getDescriptorSetLayout();
+  pipelineLayoutInfo.flags = 0;
 
   if (vkCreatePipelineLayout(deviceManager.getLogicalDevice(),
                              &pipelineLayoutInfo, nullptr,
@@ -53,6 +54,8 @@ void odin::ComputePipeline::createPipeline(
   VkComputePipelineCreateInfo pipelineCreateInfo = {};
   pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
   pipelineCreateInfo.layout = pipelineLayout;
+  pipelineCreateInfo.flags = 0;
+  pipelineCreateInfo.stage = computeShaderStageStageInfo;
 
   if (vkCreateComputePipelines(deviceManager.getLogicalDevice(), VK_NULL_HANDLE,
                                1, &pipelineCreateInfo, nullptr,

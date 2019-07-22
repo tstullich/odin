@@ -142,8 +142,9 @@ void odin::Application::createDepthResources() {
 void odin::Application::createDescriptorPool() {
   // This also creates the necessary VkDescriptorSets
   descriptorPool = std::make_unique<DescriptorPool>(
-      *deviceManager, *swapChain, *descriptorSetLayout, uniformBuffers,
-      *textureImage, *textureSampler);
+      *deviceManager, *swapChain, *computeDescriptorSetLayout,
+      *graphicsDescriptorSetLayout, uniformBuffers, *textureImage,
+      *textureSampler);
 }
 
 void odin::Application::createDescriptorSetLayouts() {
@@ -326,21 +327,20 @@ void odin::Application::initVulkan() {
   createInstance();
   createSurface();
   createDeviceManager();
-  createSwapChain();
+  createUniformBuffers();
+  createTextureImage();
+  createTextureSampler();
+  createDescriptorSetLayouts();
   createRenderPass();
-  createDescriptorSetLayout();
-  createComputePipeline();
   createGraphicsPipeline();
+  createComputePipeline();
+  createDescriptorPool();
   createCommandPool();
   createDepthResources();
   createFrameBuffers();
-  createTextureImage();
-  createTextureSampler();
   loadModel();
   createVertexBuffer();
   createIndexBuffer();
-  createUniformBuffers();
-  createDescriptorPool();
   createCommandBuffers();
   createSyncObjects();
 }
