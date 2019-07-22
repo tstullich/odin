@@ -27,13 +27,13 @@ const std::vector<VkDescriptorSet> odin::DescriptorPool::getDescriptorSets()
 void odin::DescriptorPool::createComputeDescriptorSets(
     const DeviceManager& deviceManager, const Swapchain& swapChain) {
   // Setup descriptor set pool sizes
-  std::array<VkDescriptorPoolSize, 3> poolSizes = {};
-  poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  poolSizes[0].descriptorCount =
-      static_cast<uint32_t>(swapChain.getImageSize());
-  // The descriptor for the output image from the compute shader
-  poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-  poolSizes[1].descriptorCount = 1;
+  //std::array<VkDescriptorPoolSize, 3> poolSizes = {};
+  //// The descriptor for the output image from the compute shader
+  //poolSizes[0].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+  //poolSizes[0].descriptorCount = 1;
+  //poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  //poolSizes[1].descriptorCount =
+  //    static_cast<uint32_t>(swapChain.getImageSize());
 }
 
 void odin::DescriptorPool::createDescriptorPool(

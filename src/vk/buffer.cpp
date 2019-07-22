@@ -59,14 +59,14 @@ void odin::Buffer::createBuffer(const DeviceManager& deviceManager,
 
 void odin::Buffer::createBuffer(VkPhysicalDevice physicalDevice,
                                 VkDevice logicalDevice, VkDeviceSize size,
-                                VkBufferUsageFlags usage,
+                                VkBufferUsageFlags usageFlags,
                                 VkMemoryPropertyFlags properties,
                                 VkBuffer& buffer,
                                 VkDeviceMemory& bufferMemory) {
   VkBufferCreateInfo bufferInfo = {};
   bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
   bufferInfo.size = size;
-  bufferInfo.usage = usage;
+  bufferInfo.usage = usageFlags;
   bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
   if (vkCreateBuffer(logicalDevice, &bufferInfo, nullptr, &buffer) !=

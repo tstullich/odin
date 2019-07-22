@@ -48,6 +48,10 @@ class DeviceManager {
 
   const VkDevice getLogicalDevice() const;
 
+  const uint32_t getMemoryType(uint32_t typeBits,
+                               VkMemoryPropertyFlags properties,
+                               VkBool32 *memTypeFound = nullptr) const;
+
   const VkPhysicalDevice getPhysicalDevice() const;
 
   const VkQueue getPresentationQueue() const;
@@ -75,6 +79,7 @@ class DeviceManager {
 
   SwapChainSupportDetails swapChainSupportDetails;
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+  VkPhysicalDeviceMemoryProperties memoryProperties;
   VkDevice logicalDevice;
   VkQueue graphicsQueue;
   VkQueue presentQueue;

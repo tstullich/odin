@@ -65,6 +65,8 @@ class Application {
   static std::string VERTEX_SHADER_PATH;
   static std::string MODEL_PATH;
   static std::string TEXTURE_PATH;
+  static const int WIDTH = 800;
+  static const int HEIGHT = 600;
 
  private:
   static void framebufferResizeCallback(GLFWwindow* window, int width,
@@ -153,7 +155,7 @@ class Application {
   std::vector<uint32_t> indices;
   std::unique_ptr<IndexBuffer> indexBuffer;
 
-  std::vector<UniformBuffer> uniformBuffers;
+  std::unique_ptr<UniformBuffer> computeUbo;
 
   std::unique_ptr<DescriptorSetLayout> descriptorSetLayout;
   std::unique_ptr<DescriptorPool> descriptorPool;
@@ -166,8 +168,6 @@ class Application {
   VkPipelineStageFlags sourceStage;
   VkPipelineStageFlags destinationStage;
 
-  const int WIDTH = 800;
-  const int HEIGHT = 600;
   const int MAX_FRAMES_IN_FLIGHT = 2;
 };
 }  // namespace odin

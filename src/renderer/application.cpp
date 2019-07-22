@@ -11,6 +11,8 @@ std::string odin::Application::FRAGMENT_SHADER_PATH;
 std::string odin::Application::VERTEX_SHADER_PATH;
 std::string odin::Application::MODEL_PATH;
 std::string odin::Application::TEXTURE_PATH;
+const int odin::Application::WIDTH;
+const int odin::Application::HEIGHT;
 
 odin::Application::Application(int argc, char* argv[]) {
   if (parseArguments(argc, argv)) {
@@ -104,12 +106,11 @@ void odin::Application::cleanupSwapChain() {
   vkDestroySwapchainKHR(deviceManager->getLogicalDevice(),
                         swapChain->getSwapchain(), nullptr);
 
-  for (size_t i = 0; i < swapChain->getImageSize(); i++) {
-    vkDestroyBuffer(deviceManager->getLogicalDevice(),
-                    uniformBuffers[i].getBuffer(), nullptr);
-    vkFreeMemory(deviceManager->getLogicalDevice(),
-                 uniformBuffers[i].getDeviceMemory(), nullptr);
-  }
+  vkDestroyBuffer(deviceManager->getLogicalDevice(), computeUbo->getBuffer(),
+                  nullptr);
+
+  vkFreeMemory(deviceManager->getLogicalDevice(), computeUbo->getDeviceMemory(),
+               nullptr);
 
   vkDestroyDescriptorPool(deviceManager->getLogicalDevice(),
                           descriptorPool->getDescriptorPool(), nullptr);
@@ -229,17 +230,9 @@ void odin::Application::createTextureSampler() {
 }
 
 void odin::Application::createUniformBuffers() {
+  // Create a UBO to pass various information to the compute shader
   VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-  // Our strategy is to create buffers for each swapchain image
-  size_t swapChainImageSize = swapChain->getImageSize();
-  // TODO See why this does not compile
-  uniformBuffers.resize(swapChainImageSize);
-
-  for (size_t i = 0; i < swapChainImageSize; i++) {
-    uniformBuffers[i] =
-        UniformBuffer(*deviceManager, swapChainImageSize, bufferSize);
-  }
+  computeUbo = std::make_unique<UniformBuffer>(*deviceManager, bufferSize);
 }
 
 void odin::Application::createVertexBuffer() {
@@ -537,10 +530,9 @@ void odin::Application::updateUniformBuffer(uint32_t currentImage) {
   ubo.proj[1][1] *= -1;
 
   void* data;
-  vkMapMemory(deviceManager->getLogicalDevice(),
-              uniformBuffers[currentImage].getDeviceMemory(), 0, sizeof(ubo), 0,
-              &data);
+  vkMapMemory(deviceManager->getLogicalDevice(), computeUbo->getDeviceMemory(),
+              0, sizeof(ubo), 0, &data);
   memcpy(data, &ubo, sizeof(ubo));
   vkUnmapMemory(deviceManager->getLogicalDevice(),
-                uniformBuffers[currentImage].getDeviceMemory());
+                computeUbo->getDeviceMemory());
 }

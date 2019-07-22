@@ -1,3 +1,13 @@
 #version 450
 
+// The output of the raytracing pass is going to be written here
+layout (binding = 0, rgba8) uniform writeonly image2D resultImage;
+
+// UBO for storing various data
+layout(binding = 1) uniform UniformBufferObject {
+    mat4 model;
+    mat4 view;
+    mat4 proj;
+} ubo;
+
 void main() {}

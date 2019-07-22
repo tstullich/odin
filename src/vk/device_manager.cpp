@@ -77,6 +77,9 @@ void odin::DeviceManager::createLogicalDevice(const Instance& instance,
     createInfo.enabledLayerCount = 0;
   }
 
+  // Get memory properties
+  vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
+
   if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &logicalDevice) !=
       VK_SUCCESS) {
     throw std::runtime_error("Failed to create logical device!");
@@ -153,6 +156,30 @@ const VkQueue odin::DeviceManager::getGraphicsQueue() const {
 
 const VkDevice odin::DeviceManager::getLogicalDevice() const {
   return logicalDevice;
+}
+
+const uint32_t odin::DeviceManager::getMemoryType(
+    uint32_t typeBits, VkMemoryPropertyFlags properties,
+    VkBool32* memTypeFound = nullptr) const {
+  for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
+    if ((typeBits & 1) == 1) {
+      if ((memoryProperties.memoryTypes[i].propertyFlags & properties) ==
+          properties) {
+        if (memTypeFound) {
+          *memTypeFound = true;
+        }
+        return i;
+      }
+    }
+    typeBits >>= 1;
+  }
+
+  if (memTypeFound) {
+    *memTypeFound = false;
+    return 0;
+  } else {
+    throw std::runtime_error("Could not find a matching memory type");
+  }
 }
 
 const VkPhysicalDevice odin::DeviceManager::getPhysicalDevice() const {

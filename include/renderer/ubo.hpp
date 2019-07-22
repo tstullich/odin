@@ -1,5 +1,6 @@
 #ifndef ODIN_UNIFORM_BUFFER_OBJECT_HPP
 #define ODIN_UNIFORM_BUFFER_OBJECT_HPP
+
 #include <glm/glm.hpp>
 
 namespace odin {

@@ -21,7 +21,7 @@ class Buffer {
                                  VkMemoryPropertyFlags properties);
 
   static void createBuffer(const DeviceManager& deviceManager,
-                           VkDeviceSize size, VkBufferUsageFlags usage,
+                           VkDeviceSize size, VkBufferUsageFlags usageFlags,
                            VkMemoryPropertyFlags properties, VkBuffer& buffer,
                            VkDeviceMemory& bufferMemory);
 

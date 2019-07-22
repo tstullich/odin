@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "renderer/application.hpp"
 #include "vk/buffer.hpp"
 #include "vk/command_pool.hpp"
 #include "vk/device_manager.hpp"
@@ -42,14 +43,8 @@ class TextureImage : Image {
   void createTextureImageView(const DeviceManager& deviceManager,
                               const Swapchain& swapChain);
 
-  void generateMipmaps(const DeviceManager& deviceManager,
-                       const CommandPool& commandPool, VkImage image,
-                       VkFormat imageFormat, int32_t texWidth,
-                       int32_t texHeight, uint32_t mipLevels);
-
   bool hasStencilComponent(const VkFormat& format);
 
-  uint32_t mipLevels;
   VkDeviceMemory textureImageMemory;
   VkImageView textureImageView;
 };

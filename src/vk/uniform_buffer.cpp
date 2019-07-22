@@ -1,7 +1,6 @@
 #include "vk/uniform_buffer.hpp"
 
 odin::UniformBuffer::UniformBuffer(const DeviceManager& deviceManager,
-                                   const size_t swapChainImageSize,
                                    const VkDeviceSize bufferSize) {
   createBuffer(deviceManager.getPhysicalDevice(),
                deviceManager.getLogicalDevice(), bufferSize,

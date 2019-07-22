@@ -5,17 +5,20 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <stdexcept>
 
 #include "vk/buffer.hpp"
 
 namespace odin {
 class UniformBuffer : public Buffer {
  public:
-  // Dummy constructor. Should not be used for actual initialization
-  UniformBuffer() {};
+  UniformBuffer() {
+    throw std::runtime_error(
+        "Dummy constructor should not be used for actual initialization!");
+  };
 
   UniformBuffer(const DeviceManager& deviceManager,
-                const size_t swapChainImageSize, const VkDeviceSize bufferSize);
+                const VkDeviceSize bufferSize);
 
   ~UniformBuffer();
 
