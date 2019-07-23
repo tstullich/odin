@@ -11,7 +11,6 @@
 
 #include "vk/device_manager.hpp"
 #include "vk/render_pass.hpp"
-#include "vk/swapchain.hpp"
 
 namespace odin {
 
@@ -30,13 +29,11 @@ class CommandPool {
   const VkCommandBuffer beginSingleTimeCommands(
       const VkDevice& logicalDevice) const;
 
-  void createCommandBuffers(const VkDevice& logicalDevice,
-                            const RenderPass& renderPass,
-                            const GraphicsPipeline& graphicsPipeline,
-                            const Swapchain& swapChain,
-                            const IndexBuffer& indexBuffer,
-                            const VertexBuffer& vertexBuffer,
-                            const std::vector<VkDescriptorSet>& descriptorSets);
+  void createComputeCommandBuffers(
+      const VkDevice& logicalDevice, const RenderPass& renderPass,
+      const GraphicsPipeline& graphicsPipeline, const IndexBuffer& indexBuffer,
+      const VertexBuffer& vertexBuffer,
+      const std::vector<VkDescriptorSet>& descriptorSets);
 
   void endSingleTimeCommands(const DeviceManager& deviceManager,
                              VkCommandBuffer commandBuffer) const;

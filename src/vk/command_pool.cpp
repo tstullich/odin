@@ -41,13 +41,11 @@ const VkCommandBuffer odin::CommandPool::beginSingleTimeCommands(
   return commandBuffer;
 }
 
-void odin::CommandPool::createCommandBuffers(
+void odin::CommandPool::createComputeCommandBuffers(
     const VkDevice& logicalDevice, const RenderPass& renderPass,
-    const GraphicsPipeline& graphicsPipeline, const Swapchain& swapChain,
-    const IndexBuffer& indexBuffer, const VertexBuffer& vertexBuffer,
+    const GraphicsPipeline& graphicsPipeline, const IndexBuffer& indexBuffer,
+    const VertexBuffer& vertexBuffer,
     const std::vector<VkDescriptorSet>& descriptorSets) {
-  commandBuffers.resize(swapChain.getFrameBufferSizes());
-
   VkCommandBufferAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.commandPool = commandPool;
@@ -59,66 +57,9 @@ void odin::CommandPool::createCommandBuffers(
     throw std::runtime_error("Failed to allocate command buffers!");
   }
 
-  // Record buffer commands
-  for (size_t i = 0; i < commandBuffers.size(); i++) {
-    VkCommandBufferBeginInfo beginInfo = {};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-    beginInfo.pInheritanceInfo = nullptr;
+  VkCommandBufferBeginInfo beginInfo = {};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
-      throw std::runtime_error("Failed to begin recording command buffer!");
-    }
-
-    VkRenderPassBeginInfo renderPassInfo = {};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass.getRenderPass();
-    renderPassInfo.framebuffer = swapChain.getFrameBuffer(i);
-    renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = swapChain.getExtent();
-
-    // Because we have multiple attachments with VK_ATTACHMENT_LOAD_OP_CLEAR
-    std::array<VkClearValue, 2> clearValues = {};
-    clearValues[0] = {0.0f, 0.0f, 0.0f, 1.0f};
-    clearValues[1].depthStencil = {1.0f, 0};
-
-    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-    renderPassInfo.pClearValues = clearValues.data();
-
-    // Specify render pass commands
-    vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo,
-                         VK_SUBPASS_CONTENTS_INLINE);
-
-    // Bind pipeline to command buffers
-    vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                      graphicsPipeline.getGraphicsPipeline());
-
-    // Bind the vertex buffer to the pipeline
-    VkBuffer vertexBuffers[] = {vertexBuffer.getBuffer()};
-    VkDeviceSize offsets[] = {0};
-    vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-
-    // Bind the vertex indices buffer to the pipeline
-    vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer.getBuffer(), 0,
-                         VK_INDEX_TYPE_UINT32);
-
-    // Bind descriptor sets to swap chain images
-    vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            graphicsPipeline.getPipelineLayout(), 0, 1,
-                            &descriptorSets[i], 0, nullptr);
-
-    // Draw the vertices using the indices
-    vkCmdDrawIndexed(commandBuffers[i],
-                     static_cast<uint32_t>(indexBuffer.getNumIndices()), 1, 0,
-                     0, 0);
-
-    // End render pass
-    vkCmdEndRenderPass(commandBuffers[i]);
-
-    if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-      throw std::runtime_error("Failed to record command buffer");
-    }
-  }
 }
 
 void odin::CommandPool::endSingleTimeCommands(
