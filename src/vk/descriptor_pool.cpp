@@ -56,7 +56,7 @@ void odin::DescriptorPool::createComputeDescriptorSets(
   VkWriteDescriptorSet uboDescriptor = {};
   uboDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   uboDescriptor.dstSet = descriptorSet;
-  uboDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+  uboDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   uboDescriptor.dstBinding = 1;
   uboDescriptor.pBufferInfo = ;
   uboDescriptor.descriptorCount = 1;
@@ -66,7 +66,7 @@ void odin::DescriptorPool::createComputeDescriptorSets(
   triangleDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   triangleDescriptor.dstSet = descriptorSet;
   triangleDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  triangleDescriptor.dstBinding = 3;
+  triangleDescriptor.dstBinding = 2;
   triangleDescriptor.pBufferInfo = ;
   triangleDescriptor.descriptorCount = 1;
 

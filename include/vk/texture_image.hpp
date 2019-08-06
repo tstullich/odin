@@ -8,7 +8,6 @@
 #include <stdexcept>
 #include <string>
 
-#include "renderer/application.hpp"
 #include "vk/buffer.hpp"
 #include "vk/command_pool.hpp"
 #include "vk/device_manager.hpp"

@@ -235,8 +235,7 @@ void odin::Application::createTextureImage() {
 }
 
 void odin::Application::createTextureSampler() {
-  textureSampler = std::make_unique<TextureSampler>(
-      *deviceManager, textureImage->getMipLevels());
+  textureSampler = std::make_unique<TextureSampler>(*deviceManager);
 }
 
 void odin::Application::createUniformBuffers() {
