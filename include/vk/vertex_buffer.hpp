@@ -32,6 +32,8 @@ class VertexBuffer : public Buffer {
 
   const VkDeviceMemory getBufferMemory() const;
 
+  const VkDescriptorBufferInfo getDescriptor() const;
+
   const size_t getVertexCount() const;
 
  private:

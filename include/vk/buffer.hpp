@@ -40,6 +40,7 @@ class Buffer {
                     VkDeviceMemory& bufferMemory);
 
   VkBuffer buffer;
+  VkDescriptorBufferInfo descriptor;
 };
 }  // namespace odin
 #endif  // ODIN_BUFFER_HPP

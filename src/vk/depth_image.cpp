@@ -23,11 +23,11 @@ void odin::DepthImage::createDepthResources(const DeviceManager& deviceManager,
 
   depthImageView =
       swapChain.createImageView(deviceManager.getLogicalDevice(), image,
-                                depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+                                depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 
   transitionImageLayout(deviceManager, commandPool, image, depthFormat,
                         VK_IMAGE_LAYOUT_UNDEFINED,
-                        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
+                        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
 VkFormat odin::DepthImage::findDepthFormat(const DeviceManager& deviceManager) {

@@ -56,10 +56,6 @@ void odin::CommandPool::createComputeCommandBuffers(
                                commandBuffers.data()) != VK_SUCCESS) {
     throw std::runtime_error("Failed to allocate command buffers!");
   }
-
-  VkCommandBufferBeginInfo beginInfo = {};
-  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
 }
 
 void odin::CommandPool::endSingleTimeCommands(

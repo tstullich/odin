@@ -140,11 +140,16 @@ void odin::Application::createDepthResources() {
 }
 
 void odin::Application::createDescriptorPool() {
+  // Grab all of the needed descriptors for binding
+  std::vector<VkDescriptorBufferInfo> bufferInfos;
+  bufferInfos.push_back(computeUbo->getDescriptor());
+  bufferInfos.push_back(vertexBuffer->getDescriptor());
+
   // This also creates the necessary VkDescriptorSets
   descriptorPool = std::make_unique<DescriptorPool>(
       *deviceManager, *swapChain, *computeDescriptorSetLayout,
-      *graphicsDescriptorSetLayout, uniformBuffers, *textureImage,
-      *textureSampler);
+      *graphicsDescriptorSetLayout, *textureImage, *textureSampler,
+      bufferInfos);
 }
 
 void odin::Application::createDescriptorSetLayouts() {
@@ -230,8 +235,8 @@ void odin::Application::createSyncObjects() {
 }
 
 void odin::Application::createTextureImage() {
-  textureImage = std::make_unique<TextureImage>(*deviceManager, *commandPool,
-                                                *swapChain, TEXTURE_PATH);
+  textureImage = std::make_unique<TextureImage>(
+      *deviceManager, *commandPool, *swapChain, *textureSampler, TEXTURE_PATH);
 }
 
 void odin::Application::createTextureSampler() {
@@ -327,9 +332,10 @@ void odin::Application::initVulkan() {
   createSurface();
   createDeviceManager();
   createUniformBuffers();
-  createTextureImage();
   createTextureSampler();
+  createTextureImage();
   createDescriptorSetLayouts();
+  createSwapChain();
   createRenderPass();
   createGraphicsPipeline();
   createComputePipeline();

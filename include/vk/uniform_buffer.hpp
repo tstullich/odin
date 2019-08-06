@@ -12,17 +12,14 @@
 namespace odin {
 class UniformBuffer : public Buffer {
  public:
-  UniformBuffer() {
-    throw std::runtime_error(
-        "Dummy constructor should not be used for actual initialization!");
-  };
-
   UniformBuffer(const DeviceManager& deviceManager,
                 const VkDeviceSize bufferSize);
 
   ~UniformBuffer();
 
   const VkBuffer getBuffer() const;
+
+  const VkDescriptorBufferInfo getDescriptor() const;
 
   const VkDeviceMemory getDeviceMemory() const;
 

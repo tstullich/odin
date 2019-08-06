@@ -12,17 +12,20 @@
 #include "vk/command_pool.hpp"
 #include "vk/device_manager.hpp"
 #include "vk/image.hpp"
+#include "vk/swapchain.hpp"
+#include "vk/texture_sampler.hpp"
 
 namespace odin {
 class TextureImage : Image {
  public:
   TextureImage(const DeviceManager& deviceManager,
                const CommandPool& commandPool, const Swapchain& swapChain,
+               const TextureSampler& textureSampler,
                const std::string& texturePath);
 
   ~TextureImage();
 
-  const uint32_t getMipLevels() const;
+  const VkDescriptorImageInfo getDescriptor() const;
 
   const VkImage getTextureImage() const;
 
@@ -44,6 +47,7 @@ class TextureImage : Image {
 
   bool hasStencilComponent(const VkFormat& format);
 
+  VkDescriptorImageInfo descriptor;
   VkDeviceMemory textureImageMemory;
   VkImageView textureImageView;
 };

@@ -8,13 +8,13 @@
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 
 #include "vk/descriptor_set_layout.hpp"
 #include "vk/device_manager.hpp"
 #include "vk/swapchain.hpp"
 #include "vk/texture_image.hpp"
 #include "vk/texture_sampler.hpp"
-#include "vk/uniform_buffer.hpp"
 
 namespace odin {
 class DescriptorPool {
@@ -22,9 +22,9 @@ class DescriptorPool {
   DescriptorPool(const DeviceManager& deviceManager, const Swapchain& swapChain,
                  const DescriptorSetLayout& computeDescriptorSetLayout,
                  const DescriptorSetLayout& graphicsDescriptorSetLayout,
-                 const std::vector<UniformBuffer>& uniformBuffers,
                  const TextureImage& textureImage,
-                 const TextureSampler& textureSampler);
+                 const TextureSampler& textureSampler,
+                 const std::vector<VkDescriptorBufferInfo>& bufferInfos);
 
   ~DescriptorPool();
 
@@ -36,7 +36,8 @@ class DescriptorPool {
   void createComputeDescriptorSets(
       const DeviceManager& deviceManager,
       const DescriptorSetLayout& descriptorSetLayout,
-      const Swapchain& swapChain);
+      const Swapchain& swapChain, const TextureImage& textureImage,
+      const std::vector<VkDescriptorBufferInfo> bufferInfos);
 
   void createDescriptorPool(const DeviceManager& deviceManager,
                             const Swapchain& swapChain);
@@ -44,9 +45,9 @@ class DescriptorPool {
   void createGraphicsDescriptorSets(
       const DeviceManager& deviceManager,
       const DescriptorSetLayout& descriptorSetLayout,
-      const std::vector<UniformBuffer>& uniformBuffers,
       const TextureImage& textureImage, const TextureSampler& textureSampler);
 
+  const uint32_t BUFFER_DESCRIPTORS = 2;
   VkDescriptorPool descriptorPool;
   VkDescriptorSet descriptorSet;
 };

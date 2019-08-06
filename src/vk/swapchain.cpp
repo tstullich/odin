@@ -149,7 +149,7 @@ void odin::Swapchain::createImageViews(const VkDevice& logicalDevice) {
 
   for (size_t i = 0; i < swapChainImages.size(); i++) {
     swapChainImageViews[i] = createImageView(logicalDevice, swapChainImages[i],
-                                             swapChainImageFormat, 1);
+                                             swapChainImageFormat);
   }
 }
 

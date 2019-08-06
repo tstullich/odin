@@ -4,9 +4,14 @@
 odin::TextureImage::TextureImage(const DeviceManager& deviceManager,
                                  const CommandPool& commandPool,
                                  const Swapchain& swapChain,
+                                 const TextureSampler& textureSampler,
                                  const std::string& texturePath) {
   createTextureImage(deviceManager, commandPool, texturePath);
   createTextureImageView(deviceManager, swapChain);
+
+  descriptor.sampler = textureSampler.getSampler();
+  descriptor.imageView = textureImageView;
+  descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
 odin::TextureImage::~TextureImage() {
@@ -73,6 +78,10 @@ void odin::TextureImage::createTextureImageView(
     const DeviceManager& deviceManager, const Swapchain& swapChain) {
   textureImageView = swapChain.createImageView(deviceManager.getLogicalDevice(),
                                                image, VK_FORMAT_R8G8B8A8_UNORM);
+}
+
+const VkDescriptorImageInfo odin::TextureImage::getDescriptor() const {
+  return descriptor;
 }
 
 const VkImage odin::TextureImage::getTextureImage() const { return image; }

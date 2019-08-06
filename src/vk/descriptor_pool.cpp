@@ -5,13 +5,13 @@ odin::DescriptorPool::DescriptorPool(
     const DeviceManager& deviceManager, const Swapchain& swapChain,
     const DescriptorSetLayout& computeDescriptorSetLayout,
     const DescriptorSetLayout& graphicsDescriptorSetLayout,
-    const std::vector<UniformBuffer>& uniformBuffers,
-    const TextureImage& textureImage, const TextureSampler& textureSampler) {
+    const TextureImage& textureImage, const TextureSampler& textureSampler,
+    const std::vector<VkDescriptorBufferInfo>& bufferInfos) {
   createDescriptorPool(deviceManager, swapChain);
   createComputeDescriptorSets(deviceManager, computeDescriptorSetLayout,
-                              swapChain);
+                              swapChain, textureImage, bufferInfos);
   createGraphicsDescriptorSets(deviceManager, graphicsDescriptorSetLayout,
-                               uniformBuffers, textureImage, textureSampler);
+                               textureImage, textureSampler);
 }
 
 odin::DescriptorPool::~DescriptorPool() {
@@ -28,8 +28,9 @@ const VkDescriptorSet odin::DescriptorPool::getDescriptorSet() const {
 
 void odin::DescriptorPool::createComputeDescriptorSets(
     const DeviceManager& deviceManager,
-    const DescriptorSetLayout& descriptorSetLayout,
-    const Swapchain& swapChain) {
+    const DescriptorSetLayout& descriptorSetLayout, const Swapchain& swapChain,
+    const TextureImage& textureImage,
+    const std::vector<VkDescriptorBufferInfo> bufferInfos) {
   // Allocate the descriptors for the compute pipeline
   VkDescriptorSetAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -43,13 +44,18 @@ void odin::DescriptorPool::createComputeDescriptorSets(
         "Unable to allocate descriptor set for compute pipeline!");
   }
 
+  // Buffer descriptors need to match our bind points
+  if (bufferInfos.size() != BUFFER_DESCRIPTORS) {
+    throw std::runtime_error("Buffer Descriptors size does not match!");
+  }
+
   // Output image for the compute shader
   VkWriteDescriptorSet outputDescriptor = {};
   outputDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   outputDescriptor.dstSet = descriptorSet;
   outputDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
   outputDescriptor.dstBinding = 0;
-  outputDescriptor.pBufferInfo = ;
+  outputDescriptor.pImageInfo = &textureImage.getDescriptor();
   outputDescriptor.descriptorCount = 1;
 
   // Uniform Buffer Object for various data
@@ -58,7 +64,7 @@ void odin::DescriptorPool::createComputeDescriptorSets(
   uboDescriptor.dstSet = descriptorSet;
   uboDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   uboDescriptor.dstBinding = 1;
-  uboDescriptor.pBufferInfo = ;
+  uboDescriptor.pBufferInfo = &bufferInfos[0];
   uboDescriptor.descriptorCount = 1;
 
   // Triangle data for performing pathtracing in the compute shader
@@ -67,7 +73,7 @@ void odin::DescriptorPool::createComputeDescriptorSets(
   triangleDescriptor.dstSet = descriptorSet;
   triangleDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   triangleDescriptor.dstBinding = 2;
-  triangleDescriptor.pBufferInfo = ;
+  triangleDescriptor.pBufferInfo = &bufferInfos[1];
   triangleDescriptor.descriptorCount = 1;
 
   std::array<VkWriteDescriptorSet, 3> computeWriteDescriptorSets = {
@@ -110,7 +116,6 @@ void odin::DescriptorPool::createDescriptorPool(
 void odin::DescriptorPool::createGraphicsDescriptorSets(
     const DeviceManager& deviceManager,
     const DescriptorSetLayout& descriptorSetLayout,
-    const std::vector<UniformBuffer>& uniformBuffers,
     const TextureImage& textureImage, const TextureSampler& textureSampler) {
   VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
   descriptorSetAllocateInfo.sType =
@@ -131,7 +136,8 @@ void odin::DescriptorPool::createGraphicsDescriptorSets(
   writeDescriptor.dstSet = descriptorSet;
   writeDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   writeDescriptor.dstBinding = 0;
-  writeDescriptor.pBufferInfo = nullpr;  // TODO Implement
+  writeDescriptor.pImageInfo = &textureImage.getDescriptor();
+  writeDescriptor.descriptorCount = 1;
 
   std::array<VkWriteDescriptorSet, 1> writeDescriptorSets = {writeDescriptor};
   vkUpdateDescriptorSets(deviceManager.getLogicalDevice(),

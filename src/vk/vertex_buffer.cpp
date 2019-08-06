@@ -35,6 +35,11 @@ odin::VertexBuffer::VertexBuffer(const DeviceManager& deviceManager,
   // our vertex data into GPU memory
   vkDestroyBuffer(deviceManager.getLogicalDevice(), stagingBuffer, nullptr);
   vkFreeMemory(deviceManager.getLogicalDevice(), stagingBufferMemory, nullptr);
+
+  // Setup descriptor
+  descriptor.offset = 0;
+  descriptor.buffer = buffer;
+  descriptor.range = VK_WHOLE_SIZE;
 }
 
 odin::VertexBuffer::~VertexBuffer() {
@@ -45,6 +50,10 @@ const VkBuffer odin::VertexBuffer::getBuffer() const { return buffer; }
 
 const VkDeviceMemory odin::VertexBuffer::getBufferMemory() const {
   return vertexBufferMemory;
+}
+
+const VkDescriptorBufferInfo odin::VertexBuffer::getDescriptor() const {
+  return descriptor;
 }
 
 const size_t odin::VertexBuffer::getVertexCount() const { return numVertices; }
