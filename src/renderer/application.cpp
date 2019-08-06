@@ -117,10 +117,10 @@ void odin::Application::cleanupSwapChain() {
 }
 
 void odin::Application::createCommandBuffers() {
-  commandPool->createCommandBuffers(deviceManager->getLogicalDevice(),
-                                    *renderPass, *graphicsPipeline, *swapChain,
-                                    *indexBuffer, *vertexBuffer,
-                                    descriptorPool->getDescriptorSets());
+  // Continue here by splitting command buffers up
+  commandPool->createComputeCommandBuffers(
+      deviceManager->getLogicalDevice(), *renderPass,
+      *swapChain, *indexBuffer, *vertexBuffer);
 }
 
 void odin::Application::createCommandPool() {

@@ -98,7 +98,7 @@ class HelloTriangleApplication {
   VkPipeline graphicsPipeline;
 
   VkCommandPool commandPool;
-  std::vector<VkCommandBuffer> commandBuffers;
+  std::vector<VkCommandBuffer> graphicsCommandBuffers;
 
   VkSemaphore imageAvailableSemaphore;
   VkSemaphore renderFinishedSemaphore;

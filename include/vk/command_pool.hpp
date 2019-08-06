@@ -32,8 +32,7 @@ class CommandPool {
   void createComputeCommandBuffers(
       const VkDevice& logicalDevice, const RenderPass& renderPass,
       const GraphicsPipeline& graphicsPipeline, const IndexBuffer& indexBuffer,
-      const VertexBuffer& vertexBuffer,
-      const std::vector<VkDescriptorSet>& descriptorSets);
+      const VertexBuffer& vertexBuffer);
 
   void endSingleTimeCommands(const DeviceManager& deviceManager,
                              VkCommandBuffer commandBuffer) const;

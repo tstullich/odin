@@ -44,8 +44,7 @@ const VkCommandBuffer odin::CommandPool::beginSingleTimeCommands(
 void odin::CommandPool::createComputeCommandBuffers(
     const VkDevice& logicalDevice, const RenderPass& renderPass,
     const GraphicsPipeline& graphicsPipeline, const IndexBuffer& indexBuffer,
-    const VertexBuffer& vertexBuffer,
-    const std::vector<VkDescriptorSet>& descriptorSets) {
+    const VertexBuffer& vertexBuffer) {
   VkCommandBufferAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.commandPool = commandPool;
