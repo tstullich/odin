@@ -358,11 +358,11 @@ void odin::Application::initVulkan() {
   createTextureImage();
   createGraphicsPipeline();
   createComputePipeline();
+  createVertexBuffer();
   createDescriptorPool();
   createDepthResources();
   createFrameBuffers();
   loadModel();
-  createVertexBuffer();
   createIndexBuffer();
   createSyncObjects();
   createCommandBuffers();

@@ -45,6 +45,8 @@ void odin::ComputePipeline::createPipeline(
   pipelineLayoutInfo.setLayoutCount = 1;
   pipelineLayoutInfo.pSetLayouts = descriptorSetLayout.getDescriptorSetLayout();
   pipelineLayoutInfo.flags = 0;
+  pipelineLayoutInfo.pNext = nullptr;
+  pipelineLayoutInfo.pushConstantRangeCount = 0;
 
   if (vkCreatePipelineLayout(deviceManager.getLogicalDevice(),
                              &pipelineLayoutInfo, nullptr,

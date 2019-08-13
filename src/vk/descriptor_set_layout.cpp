@@ -24,17 +24,17 @@ void odin::DescriptorSetLayout::createComputeDescriptorSetLayout(
 
   // Binding for the Uniform Buffer Object
   VkDescriptorSetLayoutBinding uboBinding = {};
-  outputBinding.binding = 1;
-  outputBinding.descriptorCount = 1;
-  outputBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  outputBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+  uboBinding.binding = 1;
+  uboBinding.descriptorCount = 1;
+  uboBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  uboBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 
   // TODO Implement Triangle struct for storage
   VkDescriptorSetLayoutBinding triangleBinding = {};
-  outputBinding.binding = 2;
-  outputBinding.descriptorCount = 1;
-  outputBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  outputBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+  triangleBinding.binding = 2;
+  triangleBinding.descriptorCount = 1;
+  triangleBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  triangleBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 
   std::array<VkDescriptorSetLayoutBinding, 3> bindings = {
       outputBinding, uboBinding, triangleBinding};
