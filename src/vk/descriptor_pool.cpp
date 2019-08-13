@@ -1,5 +1,6 @@
-#include "vk/descriptor_pool.hpp"
 #include "renderer/ubo.hpp"
+#include "vk/descriptor_pool.hpp"
+#include "vk/texture_image.hpp"
 
 odin::DescriptorPool::DescriptorPool(
     const DeviceManager& deviceManager, const Swapchain& swapChain,
@@ -22,8 +23,12 @@ const VkDescriptorPool odin::DescriptorPool::getDescriptorPool() const {
   return descriptorPool;
 }
 
-const VkDescriptorSet odin::DescriptorPool::getDescriptorSet() const {
-  return descriptorSet;
+const VkDescriptorSet* odin::DescriptorPool::getComputeDescriptorSet() const {
+  return &computeDescriptorSet;
+}
+
+const VkDescriptorSet* odin::DescriptorPool::getGraphicsDescriptorSet() const {
+  return &graphicsDescriptorSet;
 }
 
 void odin::DescriptorPool::createComputeDescriptorSets(
@@ -39,7 +44,7 @@ void odin::DescriptorPool::createComputeDescriptorSets(
   allocInfo.descriptorSetCount = 1;
 
   if (vkAllocateDescriptorSets(deviceManager.getLogicalDevice(), &allocInfo,
-                               &descriptorSet) != VK_SUCCESS) {
+                               &computeDescriptorSet) != VK_SUCCESS) {
     throw std::runtime_error(
         "Unable to allocate descriptor set for compute pipeline!");
   }
@@ -52,16 +57,16 @@ void odin::DescriptorPool::createComputeDescriptorSets(
   // Output image for the compute shader
   VkWriteDescriptorSet outputDescriptor = {};
   outputDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  outputDescriptor.dstSet = descriptorSet;
+  outputDescriptor.dstSet = computeDescriptorSet;
   outputDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
   outputDescriptor.dstBinding = 0;
-  outputDescriptor.pImageInfo = &textureImage.getDescriptor();
+  outputDescriptor.pImageInfo = textureImage.getDescriptor();
   outputDescriptor.descriptorCount = 1;
 
   // Uniform Buffer Object for various data
   VkWriteDescriptorSet uboDescriptor = {};
   uboDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  uboDescriptor.dstSet = descriptorSet;
+  uboDescriptor.dstSet = computeDescriptorSet;
   uboDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   uboDescriptor.dstBinding = 1;
   uboDescriptor.pBufferInfo = &bufferInfos[0];
@@ -70,7 +75,7 @@ void odin::DescriptorPool::createComputeDescriptorSets(
   // Triangle data for performing pathtracing in the compute shader
   VkWriteDescriptorSet triangleDescriptor = {};
   triangleDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  triangleDescriptor.dstSet = descriptorSet;
+  triangleDescriptor.dstSet = computeDescriptorSet;
   triangleDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   triangleDescriptor.dstBinding = 2;
   triangleDescriptor.pBufferInfo = &bufferInfos[1];
@@ -127,16 +132,16 @@ void odin::DescriptorPool::createGraphicsDescriptorSets(
 
   if (vkAllocateDescriptorSets(deviceManager.getLogicalDevice(),
                                &descriptorSetAllocateInfo,
-                               &descriptorSet) != VK_SUCCESS) {
+                               &graphicsDescriptorSet) != VK_SUCCESS) {
     throw std::runtime_error("Failed to allocate graphics descriptor sets!");
   }
 
   VkWriteDescriptorSet writeDescriptor = {};
   writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptor.dstSet = descriptorSet;
+  writeDescriptor.dstSet = graphicsDescriptorSet;
   writeDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   writeDescriptor.dstBinding = 0;
-  writeDescriptor.pImageInfo = &textureImage.getDescriptor();
+  writeDescriptor.pImageInfo = textureImage.getDescriptor();
   writeDescriptor.descriptorCount = 1;
 
   std::array<VkWriteDescriptorSet, 1> writeDescriptorSets = {writeDescriptor};

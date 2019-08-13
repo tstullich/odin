@@ -20,12 +20,14 @@ class TextureImage : Image {
  public:
   TextureImage(const DeviceManager& deviceManager,
                const CommandPool& commandPool, const Swapchain& swapChain,
-               const TextureSampler& textureSampler,
-               const std::string& texturePath);
+               const TextureSampler& textureSampler, uint32_t width,
+               uint32_t height);
 
   ~TextureImage();
 
-  const VkDescriptorImageInfo getDescriptor() const;
+  const VkDescriptorImageInfo* getDescriptor() const;
+
+  const uint32_t getHeight() const;
 
   const VkImage getTextureImage() const;
 
@@ -33,14 +35,16 @@ class TextureImage : Image {
 
   const VkImageView getTextureImageView() const;
 
+  const uint32_t getWidth() const;
+
  private:
   void copyBufferToImage(const DeviceManager& deviceManager,
                          const CommandPool& commandPool, VkBuffer buffer,
                          VkImage image, uint32_t width, uint32_t height);
 
   void createTextureImage(const DeviceManager& deviceManager,
-                          const CommandPool& commandPool,
-                          const std::string& texturePath);
+                          const CommandPool& commandPool, uint32_t width,
+                          uint32_t height);
 
   void createTextureImageView(const DeviceManager& deviceManager,
                               const Swapchain& swapChain);
@@ -50,6 +54,8 @@ class TextureImage : Image {
   VkDescriptorImageInfo descriptor;
   VkDeviceMemory textureImageMemory;
   VkImageView textureImageView;
+  uint32_t imageHeight;
+  uint32_t imageWidth;
 };
 }  // namespace odin
 #endif  // ODIN_TEXTURE_IMAGE_HPP

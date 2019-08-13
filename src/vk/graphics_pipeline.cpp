@@ -3,8 +3,11 @@
 odin::GraphicsPipeline::GraphicsPipeline(
     const VkDevice& logicalDevice, const Swapchain& swapChain,
     const RenderPass& renderPass,
-    const DescriptorSetLayout& descriptorSetLayout) {
-  createPipeline(logicalDevice, swapChain, renderPass, descriptorSetLayout);
+    const DescriptorSetLayout& descriptorSetLayout,
+    const std::string& vertexShaderPath,
+    const std::string& fragmentShaderPath) {
+  createPipeline(logicalDevice, swapChain, renderPass, descriptorSetLayout,
+                 vertexShaderPath, fragmentShaderPath);
 }
 
 odin::GraphicsPipeline::~GraphicsPipeline() {
@@ -14,12 +17,14 @@ odin::GraphicsPipeline::~GraphicsPipeline() {
 void odin::GraphicsPipeline::createPipeline(
     const VkDevice& logicalDevice, const Swapchain& swapChain,
     const RenderPass& renderPass,
-    const DescriptorSetLayout& descriptorSetLayout) {
+    const DescriptorSetLayout& descriptorSetLayout,
+    const std::string& vertexShaderPath,
+    const std::string& fragmentShaderPath) {
   // Load shaders from file
   auto vertShaderCode =
-      FileReader::readFile(odin::Application::VERTEX_SHADER_PATH);
+      FileReader::readFile(vertexShaderPath);
   auto fragShaderCode =
-      FileReader::readFile(odin::Application::FRAGMENT_SHADER_PATH);
+      FileReader::readFile(fragmentShaderPath);
 
   // Create shader module wrappers
   ShaderModule vertShaderModule(logicalDevice, vertShaderCode);
@@ -45,8 +50,8 @@ void odin::GraphicsPipeline::createPipeline(
                                                     fragShaderStageInfo};
 
   // Get vertex binding and attribute descriptions for shaders
-  auto bindingDescription = odin::Vertex::getBindingDescription();
-  auto attributeDescriptions = odin::Vertex::getAttributeDescriptions();
+  //auto bindingDescription = odin::Vertex::getBindingDescription();
+  //auto attributeDescriptions = odin::Vertex::getAttributeDescriptions();
 
   // Configure how vertices are treated in the pipeline
   // Here we simply want an empty input since the actual vertices are

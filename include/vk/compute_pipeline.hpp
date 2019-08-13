@@ -6,8 +6,8 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
-#include "renderer/application.hpp"
 #include "utils/file_reader.hpp"
 #include "vk/descriptor_set_layout.hpp"
 #include "vk/device_manager.hpp"
@@ -17,7 +17,8 @@ namespace odin {
 class ComputePipeline {
  public:
   ComputePipeline(const DeviceManager& deviceManager,
-                  const DescriptorSetLayout& descriptorSetLayout);
+                  const DescriptorSetLayout& descriptorSetLayout,
+                  const std::string& computeShaderPath);
 
   ~ComputePipeline();
 
@@ -27,7 +28,8 @@ class ComputePipeline {
 
  private:
   void createPipeline(const DeviceManager& deviceManager,
-                      const DescriptorSetLayout& descriptorSetLayout);
+                      const DescriptorSetLayout& descriptorSetLayout,
+                      const std::string& computeShaderPath);
 
   VkPipeline computePipeline;
   VkPipelineLayout pipelineLayout;

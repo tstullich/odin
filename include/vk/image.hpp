@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "vk/buffer.hpp"
+#include "vk/command_pool.hpp"
 #include "vk/device_manager.hpp"
 
 namespace odin {
@@ -30,7 +31,8 @@ class Image {
                              const CommandPool& commandPool, VkImage image,
                              VkFormat format, VkImageLayout oldLayout,
                              VkImageLayout newLayout);
-
+  uint32_t imageWidth;
+  uint32_t imageHeight;
   VkImage image;
 };
 }  // namespace odin

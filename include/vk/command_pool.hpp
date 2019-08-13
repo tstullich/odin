@@ -11,13 +11,15 @@
 
 #include "vk/device_manager.hpp"
 #include "vk/render_pass.hpp"
+#include "vk/swapchain.hpp"
 
 namespace odin {
 
 // Forward declarations
-class IndexBuffer;
+class ComputePipeline;
+class DescriptorPool;
 class GraphicsPipeline;
-class VertexBuffer;
+class TextureImage;
 
 class CommandPool {
  public:
@@ -29,25 +31,39 @@ class CommandPool {
   const VkCommandBuffer beginSingleTimeCommands(
       const VkDevice& logicalDevice) const;
 
-  void createComputeCommandBuffers(
-      const VkDevice& logicalDevice, const RenderPass& renderPass,
-      const GraphicsPipeline& graphicsPipeline, const IndexBuffer& indexBuffer,
-      const VertexBuffer& vertexBuffer);
+  void createComputeCommandBuffers(const VkDevice& logicalDevice,
+                                   const RenderPass& renderPass,
+                                   const ComputePipeline& computePipeline,
+                                   const DescriptorPool& descriptorPool,
+                                   uint32_t texWidth, uint32_t texHeight);
+
+  void createGraphicsCommandBuffers(const VkDevice& logicalDevice,
+                                    const RenderPass& renderPass,
+                                    const GraphicsPipeline& graphicsPipeline,
+                                    const DescriptorPool& descriptorPool,
+                                    const Swapchain& swapChain,
+                                    const TextureImage& texture);
 
   void endSingleTimeCommands(const DeviceManager& deviceManager,
                              VkCommandBuffer commandBuffer) const;
 
-  const VkCommandBuffer* getCommandBuffer(uint32_t bufferIndex) const;
+  const VkCommandBuffer* getComputeCommandBuffer() const;
 
-  const std::vector<VkCommandBuffer> getCommandBuffers() const;
+  const VkCommandPool getComputeCommandPool() const;
 
-  const size_t getCommandBufferSize() const;
+  const VkCommandBuffer* getGraphicsCommandBuffer(uint32_t bufferIndex) const;
 
-  const VkCommandPool getCommandPool() const;
+  const std::vector<VkCommandBuffer> getGraphicsCommandBuffers() const;
+
+  const size_t getGraphicsCommandBufferSize() const;
+
+  const VkCommandPool getGraphicsCommandPool() const;
 
  private:
-  VkCommandPool commandPool;
-  std::vector<VkCommandBuffer> commandBuffers;
+  VkCommandPool computeCommandPool;
+  VkCommandPool graphicsCommandPool;
+  VkCommandBuffer computeCommandBuffer;
+  std::vector<VkCommandBuffer> graphicsCommandBuffers;
 };
 }  // namespace odin
 #endif  // ODIN_COMMAND_POOL_HPP

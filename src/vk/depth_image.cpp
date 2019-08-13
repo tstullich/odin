@@ -1,4 +1,5 @@
 #include "vk/depth_image.hpp"
+#include "vk/command_pool.hpp"
 
 odin::DepthImage::DepthImage(const DeviceManager& deviceManager,
                              const CommandPool& commandPool,
@@ -16,14 +17,13 @@ void odin::DepthImage::createDepthResources(const DeviceManager& deviceManager,
   VkFormat depthFormat = findDepthFormat(deviceManager);
 
   auto swapChainExtent = swapChain.getExtent();
-  createImage(deviceManager, swapChainExtent.width, swapChainExtent.height, 1,
+  createImage(deviceManager, swapChainExtent.width, swapChainExtent.height,
               depthFormat, VK_IMAGE_TILING_OPTIMAL,
               VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, depthImageMemory);
 
-  depthImageView =
-      swapChain.createImageView(deviceManager.getLogicalDevice(), image,
-                                depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+  depthImageView = swapChain.createImageView(deviceManager.getLogicalDevice(),
+                                             image, depthFormat);
 
   transitionImageLayout(deviceManager, commandPool, image, depthFormat,
                         VK_IMAGE_LAYOUT_UNDEFINED,
@@ -64,9 +64,7 @@ const VkDeviceMemory odin::DepthImage::getDeviceMemory() const {
   return depthImageMemory;
 }
 
-const VkImage odin::DepthImage::getImage() const {
-  return image;
-}
+const VkImage odin::DepthImage::getImage() const { return image; }
 
 const VkImageView odin::DepthImage::getImageView() const {
   return depthImageView;

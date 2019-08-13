@@ -20,6 +20,9 @@ void odin::Image::createImage(const DeviceManager& deviceManager,
   imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
   imageInfo.flags = 0;
 
+  imageWidth = width;
+  imageHeight = height;
+
   if (vkCreateImage(deviceManager.getLogicalDevice(), &imageInfo, nullptr,
                     &image) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create image!");

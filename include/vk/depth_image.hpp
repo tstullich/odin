@@ -8,11 +8,14 @@
 #include <stdexcept>
 #include <vector>
 
-#include "vk/command_pool.hpp"
 #include "vk/image.hpp"
 #include "vk/swapchain.hpp"
 
 namespace odin {
+
+// Forward declarations
+class CommandPool;
+
 class DepthImage : Image {
  public:
   DepthImage(const DeviceManager& deviceManager, const CommandPool& commandPool,

@@ -39,9 +39,13 @@ void odin::Application::cleanup() {
   vkFreeMemory(deviceManager->getLogicalDevice(),
                textureImage->getTextureImageMemory(), nullptr);
 
-  vkDestroyDescriptorSetLayout(deviceManager->getLogicalDevice(),
-                               *descriptorSetLayout->getDescriptorSetLayout(),
-                               nullptr);
+  vkDestroyDescriptorSetLayout(
+      deviceManager->getLogicalDevice(),
+      *graphicsDescriptorSetLayout->getDescriptorSetLayout(), nullptr);
+
+  vkDestroyDescriptorSetLayout(
+      deviceManager->getLogicalDevice(),
+      *computeDescriptorSetLayout->getDescriptorSetLayout(), nullptr);
 
   vkDestroyBuffer(deviceManager->getLogicalDevice(), indexBuffer->getBuffer(),
                   nullptr);
@@ -53,7 +57,7 @@ void odin::Application::cleanup() {
   vkFreeMemory(deviceManager->getLogicalDevice(),
                vertexBuffer->getBufferMemory(), nullptr);
 
-  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     vkDestroySemaphore(deviceManager->getLogicalDevice(),
                        imageAvailableSemaphores[i], nullptr);
     vkDestroySemaphore(deviceManager->getLogicalDevice(),
@@ -63,7 +67,10 @@ void odin::Application::cleanup() {
   }
 
   vkDestroyCommandPool(deviceManager->getLogicalDevice(),
-                       commandPool->getCommandPool(), nullptr);
+                       commandPool->getComputeCommandPool(), nullptr);
+
+  vkDestroyCommandPool(deviceManager->getLogicalDevice(),
+                       commandPool->getGraphicsCommandPool(), nullptr);
 
   vkDestroyDevice(deviceManager->getLogicalDevice(), nullptr);
 
@@ -75,21 +82,14 @@ void odin::Application::cleanup() {
 }
 
 void odin::Application::cleanupSwapChain() {
-  vkDestroyImageView(deviceManager->getLogicalDevice(),
-                     depthImage->getImageView(), nullptr);
-  vkDestroyImage(deviceManager->getLogicalDevice(), depthImage->getImage(),
-                 nullptr);
-  vkFreeMemory(deviceManager->getLogicalDevice(), depthImage->getDeviceMemory(),
-               nullptr);
-
   for (auto framebuffer : swapChain->getFramebuffers()) {
     vkDestroyFramebuffer(deviceManager->getLogicalDevice(), framebuffer,
                          nullptr);
   }
 
-  auto commandBuffers = commandPool->getCommandBuffers();
+  auto commandBuffers = commandPool->getGraphicsCommandBuffers();
   vkFreeCommandBuffers(
-      deviceManager->getLogicalDevice(), commandPool->getCommandPool(),
+      deviceManager->getLogicalDevice(), commandPool->getGraphicsCommandPool(),
       static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 
   vkDestroyPipeline(deviceManager->getLogicalDevice(),
@@ -117,10 +117,13 @@ void odin::Application::cleanupSwapChain() {
 }
 
 void odin::Application::createCommandBuffers() {
-  // Continue here by splitting command buffers up
   commandPool->createComputeCommandBuffers(
-      deviceManager->getLogicalDevice(), *renderPass,
-      *swapChain, *indexBuffer, *vertexBuffer);
+      deviceManager->getLogicalDevice(), *renderPass, *computePipeline,
+      *descriptorPool, textureImage->getWidth(), textureImage->getHeight());
+
+  commandPool->createGraphicsCommandBuffers(
+      deviceManager->getLogicalDevice(), *renderPass, *graphicsPipeline,
+      *descriptorPool, *swapChain, *textureImage);
 }
 
 void odin::Application::createCommandPool() {
@@ -131,7 +134,7 @@ void odin::Application::createCommandPool() {
 
 void odin::Application::createComputePipeline() {
   computePipeline = std::make_unique<ComputePipeline>(
-      *deviceManager, computeDescriptorSetLayout);
+      *deviceManager, *computeDescriptorSetLayout, COMPUTE_SHADER_PATH);
 }
 
 void odin::Application::createDepthResources() {
@@ -173,7 +176,7 @@ void odin::Application::createFrameBuffers() {
 void odin::Application::createGraphicsPipeline() {
   graphicsPipeline = std::make_unique<GraphicsPipeline>(
       deviceManager->getLogicalDevice(), *swapChain, *renderPass,
-      *graphicsDescriptorSetLayout);
+      *graphicsDescriptorSetLayout, VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
 }
 
 // TODO Look into packing vertex data and vertex indices into one
@@ -221,7 +224,7 @@ void odin::Application::createSyncObjects() {
   fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
   fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+  for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     if (vkCreateSemaphore(deviceManager->getLogicalDevice(), &semaphoreInfo,
                           nullptr,
                           &imageAvailableSemaphores[i]) != VK_SUCCESS ||
@@ -232,11 +235,16 @@ void odin::Application::createSyncObjects() {
       throw std::runtime_error("Failed to create semaphores!");
     }
   }
+
+  if (vkCreateFence(deviceManager->getLogicalDevice(), &fenceInfo, nullptr,
+                    &computeFence) != VK_SUCCESS) {
+    throw std::runtime_error("Unable to create fence for compute pipeline!");
+  }
 }
 
 void odin::Application::createTextureImage() {
   textureImage = std::make_unique<TextureImage>(
-      *deviceManager, *commandPool, *swapChain, *textureSampler, TEXTURE_PATH);
+      *deviceManager, *commandPool, *swapChain, *textureSampler, WIDTH, HEIGHT);
 }
 
 void odin::Application::createTextureSampler() {
@@ -285,7 +293,8 @@ void odin::Application::drawFrame() {
   submitInfo.pWaitDstStageMask = waitStages;
 
   submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = commandPool->getCommandBuffer(imageIndex);
+  submitInfo.pCommandBuffers =
+      commandPool->getGraphicsCommandBuffer(imageIndex);
 
   VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
   submitInfo.signalSemaphoreCount = 1;
@@ -299,20 +308,19 @@ void odin::Application::drawFrame() {
     throw std::runtime_error("Failed to submit draw command buffer!");
   }
 
-  VkPresentInfoKHR presentInfo = {};
-  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  VkPresentInfoKHR graphicsPresentInfo = {};
+  graphicsPresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
-  presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = signalSemaphores;
+  graphicsPresentInfo.waitSemaphoreCount = 1;
+  graphicsPresentInfo.pWaitSemaphores = signalSemaphores;
 
   VkSwapchainKHR swapChains[] = {swapChain->getSwapchain()};
-  presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = swapChains;
+  graphicsPresentInfo.swapchainCount = 1;
+  graphicsPresentInfo.pSwapchains = swapChains;
+  graphicsPresentInfo.pImageIndices = &imageIndex;
 
-  presentInfo.pImageIndices = &imageIndex;
-
-  result =
-      vkQueuePresentKHR(deviceManager->getPresentationQueue(), &presentInfo);
+  result = vkQueuePresentKHR(deviceManager->getPresentationQueue(),
+                             &graphicsPresentInfo);
 
   // This check should be done after vkQueuePresentKHR to avoid
   // improperly signalled Semaphores
@@ -324,6 +332,16 @@ void odin::Application::drawFrame() {
     throw std::runtime_error("Failed to present swap chain image!");
   }
 
+  VkSubmitInfo computeSubmitInfo = {};
+  computeSubmitInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  computeSubmitInfo.commandBufferCount = 1;
+  computeSubmitInfo.pCommandBuffers = commandPool->getComputeCommandBuffer();
+
+  if (vkQueueSubmit(deviceManager->getComputeQueue(), 1, &computeSubmitInfo,
+                    computeFence) != VK_SUCCESS) {
+    throw std::runtime_error("Unable to submit to compute queue!");
+  }
+
   currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
@@ -332,22 +350,22 @@ void odin::Application::initVulkan() {
   createSurface();
   createDeviceManager();
   createUniformBuffers();
-  createTextureSampler();
-  createTextureImage();
   createDescriptorSetLayouts();
   createSwapChain();
   createRenderPass();
+  createCommandPool();
+  createTextureSampler();
+  createTextureImage();
   createGraphicsPipeline();
   createComputePipeline();
   createDescriptorPool();
-  createCommandPool();
   createDepthResources();
   createFrameBuffers();
   loadModel();
   createVertexBuffer();
   createIndexBuffer();
-  createCommandBuffers();
   createSyncObjects();
+  createCommandBuffers();
 }
 
 void odin::Application::initWindow() {

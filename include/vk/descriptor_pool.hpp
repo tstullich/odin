@@ -13,10 +13,12 @@
 #include "vk/descriptor_set_layout.hpp"
 #include "vk/device_manager.hpp"
 #include "vk/swapchain.hpp"
-#include "vk/texture_image.hpp"
 #include "vk/texture_sampler.hpp"
 
 namespace odin {
+
+class TextureImage;
+
 class DescriptorPool {
  public:
   DescriptorPool(const DeviceManager& deviceManager, const Swapchain& swapChain,
@@ -30,7 +32,9 @@ class DescriptorPool {
 
   const VkDescriptorPool getDescriptorPool() const;
 
-  const VkDescriptorSet getDescriptorSet() const;
+  const VkDescriptorSet* getComputeDescriptorSet() const;
+
+  const VkDescriptorSet* getGraphicsDescriptorSet() const;
 
  private:
   void createComputeDescriptorSets(
@@ -49,7 +53,8 @@ class DescriptorPool {
 
   const uint32_t BUFFER_DESCRIPTORS = 2;
   VkDescriptorPool descriptorPool;
-  VkDescriptorSet descriptorSet;
+  VkDescriptorSet computeDescriptorSet;
+  VkDescriptorSet graphicsDescriptorSet;
 };
 }  // namespace odin
 #endif  // ODIN_DESCRIPTOR_POOL_HPP

@@ -148,6 +148,7 @@ class Application {
   std::vector<VkSemaphore> imageAvailableSemaphores;
   std::vector<VkSemaphore> renderFinishedSemaphores;
   std::vector<VkFence> inFlightFences;
+  VkFence computeFence;
   size_t currentFrame = 0;
 
   bool framebufferResized = false;

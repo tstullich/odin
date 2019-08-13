@@ -160,7 +160,7 @@ const VkDevice odin::DeviceManager::getLogicalDevice() const {
 
 const uint32_t odin::DeviceManager::getMemoryType(
     uint32_t typeBits, VkMemoryPropertyFlags properties,
-    VkBool32* memTypeFound = nullptr) const {
+    VkBool32* memTypeFound) const {
   for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
     if ((typeBits & 1) == 1) {
       if ((memoryProperties.memoryTypes[i].propertyFlags & properties) ==

@@ -2,8 +2,9 @@
 
 odin::ComputePipeline::ComputePipeline(
     const DeviceManager& deviceManager,
-    const DescriptorSetLayout& descriptoSetLayout) {
-  createPipeline(deviceManager, descriptoSetLayout);
+    const DescriptorSetLayout& descriptorSetLayout,
+    const std::string& computeShaderPath) {
+  createPipeline(deviceManager, descriptorSetLayout, computeShaderPath);
 }
 
 odin::ComputePipeline::~ComputePipeline() {
@@ -20,10 +21,11 @@ const VkPipelineLayout odin::ComputePipeline::getPipelineLayout() const {
 
 void odin::ComputePipeline::createPipeline(
     const DeviceManager& deviceManager,
-    const DescriptorSetLayout& descriptorSetLayout) {
+    const DescriptorSetLayout& descriptorSetLayout,
+    const std::string& computeShaderPath) {
   // Load compute shader
   auto computeShaderCode =
-      FileReader::readFile(odin::Application::COMPUTE_SHADER_PATH);
+      FileReader::readFile(computeShaderPath);
 
   // Create compute shader module
   ShaderModule computeShaderModule(deviceManager.getLogicalDevice(),
