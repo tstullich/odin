@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "renderer/ubo.hpp"
+#include "renderer/triangle.hpp"
 #include "renderer/vertex.hpp"
 #include "vk/compute_pipeline.hpp"
 #include "vk/depth_image.hpp"
@@ -153,8 +154,11 @@ class Application {
 
   bool framebufferResized = false;
 
-  std::vector<Vertex> vertices;
+  // TODO Replace vertex buffer with triangle buffer
+  //std::vector<Vertex> vertices;
   std::unique_ptr<VertexBuffer> vertexBuffer;
+
+  std::vector<Triangle> triangles;
 
   std::vector<uint32_t> indices;
   std::unique_ptr<IndexBuffer> indexBuffer;

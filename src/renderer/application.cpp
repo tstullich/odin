@@ -332,8 +332,9 @@ void odin::Application::drawFrame() {
     throw std::runtime_error("Failed to present swap chain image!");
   }
 
-  // Wait for compute buffer to submit again
-  vkWaitForFences(deviceManager->getLogicalDevice(), 1, &computeFence, VK_TRUE, UINT64_MAX);
+  // Wait for compute buffer to before submitting again
+  vkWaitForFences(deviceManager->getLogicalDevice(), 1, &computeFence, VK_TRUE,
+                  UINT64_MAX);
   vkResetFences(deviceManager->getLogicalDevice(), 1, &computeFence);
 
   VkSubmitInfo computeSubmitInfo = {};
@@ -396,26 +397,27 @@ void odin::Application::loadModel() {
 
   // For efficiency we only want unique vertices
   std::unordered_map<Vertex, uint32_t> uniqueVertices = {};
-  for (const auto& shape : shapes) {
-    for (const auto& index : shape.mesh.indices) {
-      Vertex vertex = {};
-      vertex.pos = {attrib.vertices[3 * index.vertex_index + 0],
-                    attrib.vertices[3 * index.vertex_index + 1],
-                    attrib.vertices[3 * index.vertex_index + 2]};
+  for (auto const& shape : shapes) {
+    size_t indexOffset = 0;
+    for (auto const& faceIdx : shape.mesh.num_face_vertices) {
+      Triangle triangle = {};
+      auto idx = shape.mesh.indices[indexOffset];
+      triangle.v0 = {attrib.vertices[3 * idx.vertex_index + 0],
+                     attrib.vertices[3 * idx.vertex_index + 1],
+                     attrib.vertices[3 * idx.vertex_index + 2]};
 
-      vertex.texCoord = {
-          attrib.texcoords[2 * index.texcoord_index + 0],
-          // Need to flip the coordinates to be compatible with Vulkan
-          1.0f - attrib.texcoords[2 * index.texcoord_index + 1]};
+      idx = shape.mesh.indices[indexOffset + 1];
+      triangle.v1 = {attrib.vertices[3 * idx.vertex_index + 0],
+                     attrib.vertices[3 * idx.vertex_index + 1],
+                     attrib.vertices[3 * idx.vertex_index + 2]};
 
-      vertex.color = {1.0f, 1.0f, 1.0f};
+      idx = shape.mesh.indices[indexOffset + 2];
+      triangle.v2 = {attrib.vertices[3 * idx.vertex_index + 0],
+                     attrib.vertices[3 * idx.vertex_index + 1],
+                     attrib.vertices[3 * idx.vertex_index + 2]};
 
-      if (uniqueVertices.count(vertex) == 0) {
-        uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-        vertices.push_back(vertex);
-      }
-
-      indices.push_back(uniqueVertices[vertex]);
+      triangles.push_back(triangle);
+      indexOffset += faceIdx;
     }
   }
 }
