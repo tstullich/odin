@@ -119,9 +119,9 @@ void odin::Swapchain::createFrameBuffers(const VkDevice& logicalDevice,
   }
 }
 
-VkImageView odin::Swapchain::createImageView(const VkDevice& logicalDevice,
-                                             const VkImage& image,
-                                             const VkFormat& format) const {
+VkImageView odin::Swapchain::createImageView(
+    const VkDevice& logicalDevice, const VkImage& image, const VkFormat& format,
+    const VkImageAspectFlags& aspectMask) const {
   VkImageViewCreateInfo viewInfo = {};
   viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   viewInfo.image = image;
@@ -129,7 +129,7 @@ VkImageView odin::Swapchain::createImageView(const VkDevice& logicalDevice,
   viewInfo.format = format;
   viewInfo.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G,
                          VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
-  viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  viewInfo.subresourceRange.aspectMask = aspectMask;
   viewInfo.subresourceRange.baseMipLevel = 0;
   viewInfo.subresourceRange.levelCount = 1;
   viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -148,8 +148,9 @@ void odin::Swapchain::createImageViews(const VkDevice& logicalDevice) {
   swapChainImageViews.resize(swapChainImages.size());
 
   for (size_t i = 0; i < swapChainImages.size(); i++) {
-    swapChainImageViews[i] = createImageView(logicalDevice, swapChainImages[i],
-                                             swapChainImageFormat);
+    swapChainImageViews[i] =
+        createImageView(logicalDevice, swapChainImages[i], swapChainImageFormat,
+                        VK_IMAGE_ASPECT_COLOR_BIT);
   }
 }
 

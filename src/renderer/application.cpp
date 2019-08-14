@@ -332,8 +332,12 @@ void odin::Application::drawFrame() {
     throw std::runtime_error("Failed to present swap chain image!");
   }
 
+  // Wait for compute buffer to submit again
+  vkWaitForFences(deviceManager->getLogicalDevice(), 1, &computeFence, VK_TRUE, UINT64_MAX);
+  vkResetFences(deviceManager->getLogicalDevice(), 1, &computeFence);
+
   VkSubmitInfo computeSubmitInfo = {};
-  computeSubmitInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   computeSubmitInfo.commandBufferCount = 1;
   computeSubmitInfo.pCommandBuffers = commandPool->getComputeCommandBuffer();
 
@@ -358,11 +362,11 @@ void odin::Application::initVulkan() {
   createTextureImage();
   createGraphicsPipeline();
   createComputePipeline();
+  loadModel();
   createVertexBuffer();
   createDescriptorPool();
   createDepthResources();
   createFrameBuffers();
-  loadModel();
   createIndexBuffer();
   createSyncObjects();
   createCommandBuffers();

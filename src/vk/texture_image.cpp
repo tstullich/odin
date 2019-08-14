@@ -10,7 +10,7 @@ odin::TextureImage::TextureImage(const DeviceManager& deviceManager,
 
   descriptor.sampler = textureSampler.getSampler();
   descriptor.imageView = textureImageView;
-  descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 }
 
 odin::TextureImage::~TextureImage() {
@@ -46,6 +46,9 @@ void odin::TextureImage::copyBufferToImage(const DeviceManager& deviceManager,
 void odin::TextureImage::createTextureImage(const DeviceManager& deviceManager,
                                             const CommandPool& commandPool,
                                             uint32_t width, uint32_t height) {
+  imageHeight = height;
+  imageWidth = width;
+
   // Get device properties for the requested texture format
   // TODO Check if we could use a better image format
   VkFormatProperties formatProperties;
@@ -53,12 +56,12 @@ void odin::TextureImage::createTextureImage(const DeviceManager& deviceManager,
                                       VK_FORMAT_R8G8B8A8_UNORM,
                                       &formatProperties);
 
-  // TODO Check if requested image format supports image storage operations
-  //if (formatProperties.optimalTilingFeatures &
-  //    VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT) {
-  //  throw std::runtime_error(
-  //      "Could not find supported image format for compute texture!");
-  //}
+  // Check if requested image format supports image storage operations
+  if (!(formatProperties.optimalTilingFeatures &
+        VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT)) {
+    throw std::runtime_error(
+        "Could not find supported image format for compute texture!");
+  }
 
   // Create a texture that is used for storage in the compute shader
   // and can be sampled from in the fragment shader
@@ -69,14 +72,15 @@ void odin::TextureImage::createTextureImage(const DeviceManager& deviceManager,
 
   // Setup the image layout for the texture
   transitionImageLayout(deviceManager, commandPool, image,
-                        VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
-                        VK_IMAGE_LAYOUT_GENERAL);
+                        VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT,
+                        VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 }
 
 void odin::TextureImage::createTextureImageView(
     const DeviceManager& deviceManager, const Swapchain& swapChain) {
   textureImageView = swapChain.createImageView(deviceManager.getLogicalDevice(),
-                                               image, VK_FORMAT_R8G8B8A8_UNORM);
+                                               image, VK_FORMAT_R8G8B8A8_UNORM,
+                                               VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 const VkDescriptorImageInfo* odin::TextureImage::getDescriptor() const {

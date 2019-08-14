@@ -20,9 +20,6 @@ void odin::Image::createImage(const DeviceManager& deviceManager,
   imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
   imageInfo.flags = 0;
 
-  imageWidth = width;
-  imageHeight = height;
-
   if (vkCreateImage(deviceManager.getLogicalDevice(), &imageInfo, nullptr,
                     &image) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create image!");
@@ -55,6 +52,7 @@ bool odin::Image::hasStencilComponent(const VkFormat& format) {
 void odin::Image::transitionImageLayout(const DeviceManager& deviceManager,
                                         const CommandPool& commandPool,
                                         VkImage image, VkFormat format,
+                                        VkImageAspectFlags aspectMask,
                                         VkImageLayout oldLayout,
                                         VkImageLayout newLayout) {
   VkCommandBuffer commandBuffer =
@@ -70,7 +68,7 @@ void odin::Image::transitionImageLayout(const DeviceManager& deviceManager,
   barrier.image = image;
 
   // Set subresource range values
-  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.aspectMask = aspectMask;
   barrier.subresourceRange.baseArrayLayer = 0;
   barrier.subresourceRange.baseMipLevel = 0;
   barrier.subresourceRange.layerCount = 1;

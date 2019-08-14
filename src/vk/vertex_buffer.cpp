@@ -23,11 +23,12 @@ odin::VertexBuffer::VertexBuffer(const DeviceManager& deviceManager,
   memcpy(data, vertices.data(), static_cast<size_t>(bufferSize));
   vkUnmapMemory(deviceManager.getLogicalDevice(), stagingBufferMemory);
 
-  createBuffer(
-      deviceManager.getPhysicalDevice(), deviceManager.getLogicalDevice(),
-      bufferSize,
-      VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, buffer, vertexBufferMemory);
+  createBuffer(deviceManager.getPhysicalDevice(),
+               deviceManager.getLogicalDevice(), bufferSize,
+               VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, buffer, vertexBufferMemory);
 
   copyBuffer(deviceManager, commandPool, stagingBuffer, buffer, bufferSize);
 

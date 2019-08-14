@@ -91,6 +91,20 @@ void odin::CommandPool::createGraphicsCommandBuffers(
     const GraphicsPipeline& graphicsPipeline,
     const DescriptorPool& descriptorPool, const Swapchain& swapChain,
     const TextureImage& texture) {
+  // Allocate command buffers first
+  graphicsCommandBuffers.resize(swapChain.getFrameBufferSizes());
+  VkCommandBufferAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.commandPool = graphicsCommandPool;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandBufferCount =
+      static_cast<uint32_t>(graphicsCommandBuffers.size());
+
+  if (vkAllocateCommandBuffers(logicalDevice, &allocInfo,
+                               graphicsCommandBuffers.data()) != VK_SUCCESS) {
+    throw std::runtime_error("Failed to allocate graphics command buffers!");
+  }
+
   VkCommandBufferBeginInfo commandBufferInfo = {};
   commandBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 

@@ -29,10 +29,9 @@ class Image {
 
   void transitionImageLayout(const DeviceManager& deviceManager,
                              const CommandPool& commandPool, VkImage image,
-                             VkFormat format, VkImageLayout oldLayout,
-                             VkImageLayout newLayout);
-  uint32_t imageWidth;
-  uint32_t imageHeight;
+                             VkFormat format, VkImageAspectFlags aspectMask,
+                             VkImageLayout oldLayout, VkImageLayout newLayout);
+
   VkImage image;
 };
 }  // namespace odin
