@@ -15,6 +15,7 @@ set(SOURCE_FILES
     vk/buffer.cpp
     vk/index_buffer.cpp
     vk/vertex_buffer.cpp
+    vk/triangle_buffer.cpp
     vk/uniform_buffer.cpp
     vk/texture_sampler.cpp
     vk/descriptor_set_layout.cpp

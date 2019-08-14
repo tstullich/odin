@@ -47,15 +47,10 @@ void odin::Application::cleanup() {
       deviceManager->getLogicalDevice(),
       *computeDescriptorSetLayout->getDescriptorSetLayout(), nullptr);
 
-  vkDestroyBuffer(deviceManager->getLogicalDevice(), indexBuffer->getBuffer(),
-                  nullptr);
+  vkDestroyBuffer(deviceManager->getLogicalDevice(),
+                  triangleBuffer->getBuffer(), nullptr);
   vkFreeMemory(deviceManager->getLogicalDevice(),
-               indexBuffer->getBufferMemory(), nullptr);
-
-  vkDestroyBuffer(deviceManager->getLogicalDevice(), vertexBuffer->getBuffer(),
-                  nullptr);
-  vkFreeMemory(deviceManager->getLogicalDevice(),
-               vertexBuffer->getBufferMemory(), nullptr);
+               triangleBuffer->getBufferMemory(), nullptr);
 
   for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     vkDestroySemaphore(deviceManager->getLogicalDevice(),
@@ -146,7 +141,7 @@ void odin::Application::createDescriptorPool() {
   // Grab all of the needed descriptors for binding
   std::vector<VkDescriptorBufferInfo> bufferInfos;
   bufferInfos.push_back(computeUbo->getDescriptor());
-  bufferInfos.push_back(vertexBuffer->getDescriptor());
+  bufferInfos.push_back(triangleBuffer->getDescriptor());
 
   // This also creates the necessary VkDescriptorSets
   descriptorPool = std::make_unique<DescriptorPool>(
@@ -177,14 +172,6 @@ void odin::Application::createGraphicsPipeline() {
   graphicsPipeline = std::make_unique<GraphicsPipeline>(
       deviceManager->getLogicalDevice(), *swapChain, *renderPass,
       *graphicsDescriptorSetLayout, VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
-}
-
-// TODO Look into packing vertex data and vertex indices into one
-// VkBuffer object using offsets. This way the data is more cache coherent
-// and the driver can optimize better. Look into 'aliasing'.
-void odin::Application::createIndexBuffer() {
-  indexBuffer =
-      std::make_unique<IndexBuffer>(*deviceManager, *commandPool, indices);
 }
 
 void odin::Application::createInstance() {
@@ -251,15 +238,15 @@ void odin::Application::createTextureSampler() {
   textureSampler = std::make_unique<TextureSampler>(*deviceManager);
 }
 
+void odin::Application::createTriangleBuffer() {
+  triangleBuffer =
+      std::make_unique<TriangleBuffer>(*deviceManager, *commandPool, triangles);
+}
+
 void odin::Application::createUniformBuffers() {
   // Create a UBO to pass various information to the compute shader
   VkDeviceSize bufferSize = sizeof(UniformBufferObject);
   computeUbo = std::make_unique<UniformBuffer>(*deviceManager, bufferSize);
-}
-
-void odin::Application::createVertexBuffer() {
-  vertexBuffer =
-      std::make_unique<VertexBuffer>(*deviceManager, *commandPool, vertices);
 }
 
 void odin::Application::drawFrame() {
@@ -364,11 +351,10 @@ void odin::Application::initVulkan() {
   createGraphicsPipeline();
   createComputePipeline();
   loadModel();
-  createVertexBuffer();
+  createTriangleBuffer();
   createDescriptorPool();
   createDepthResources();
   createFrameBuffers();
-  createIndexBuffer();
   createSyncObjects();
   createCommandBuffers();
 }

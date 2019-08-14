@@ -41,6 +41,7 @@
 #include "vk/swapchain.hpp"
 #include "vk/texture_image.hpp"
 #include "vk/texture_sampler.hpp"
+#include "vk/triangle_buffer.hpp"
 #include "vk/uniform_buffer.hpp"
 #include "vk/vertex_buffer.hpp"
 
@@ -94,8 +95,6 @@ class Application {
 
   void createGraphicsPipeline();
 
-  void createIndexBuffer();
-
   void createInstance();
 
   void createRenderPass();
@@ -110,9 +109,9 @@ class Application {
 
   void createTextureSampler();
 
-  void createUniformBuffers();
+  void createTriangleBuffer();
 
-  void createVertexBuffer();
+  void createUniformBuffers();
 
   void drawFrame();
 
@@ -154,14 +153,8 @@ class Application {
 
   bool framebufferResized = false;
 
-  // TODO Replace vertex buffer with triangle buffer
-  //std::vector<Vertex> vertices;
-  std::unique_ptr<VertexBuffer> vertexBuffer;
-
   std::vector<Triangle> triangles;
-
-  std::vector<uint32_t> indices;
-  std::unique_ptr<IndexBuffer> indexBuffer;
+  std::unique_ptr<TriangleBuffer> triangleBuffer;
 
   std::unique_ptr<UniformBuffer> computeUbo;
 
