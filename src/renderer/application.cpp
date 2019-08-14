@@ -402,6 +402,7 @@ void odin::Application::loadModel() {
                      attrib.vertices[3 * idx.vertex_index + 1],
                      attrib.vertices[3 * idx.vertex_index + 2]};
 
+      triangle.calculateNormal();
       triangles.push_back(triangle);
       indexOffset += faceIdx;
     }
