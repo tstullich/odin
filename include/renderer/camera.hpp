@@ -11,12 +11,12 @@ struct Camera {
   glm::vec3 vertical;
 
   void init() {
+    origin = glm::vec3(0.0f, 0.0f, 0.0f);
     lower_left_corner = glm::vec3(-2.0f, -1.0f, -1.0f);
     // Setting horizontal and vertical according to the final
     // aspect ratio of the image (800x600 = 4:3)
     horizontal = glm::vec3(4.0f, 0.0f, 0.0f);
     vertical = glm::vec3(0.0f, 3.0f, 0.0f);
-    origin = glm::vec3(0.0f, 0.0f, 0.0f);
   }
 };
 

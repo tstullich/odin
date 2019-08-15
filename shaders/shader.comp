@@ -31,7 +31,7 @@ layout (std140, binding = 2) buffer Triangles {
 // Function for generating random numbers
 // https://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl
 float rand(vec2 co){
-    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+    return fract(sin(dot(co.xy ,vec2(12.9898, 78.233))) * 43758.5453);
 }
 
 // A struct used for recording data about intersections
@@ -99,7 +99,7 @@ bool sphere_hit(in Ray r, in Sphere sphere, in float t_min, in float t_max,
     return false;
 }
 
-bool hit(in Ray r, in Sphere[1] spheres, in float t_min, in float t_max,
+bool hit(in Ray r, in Sphere[2] spheres, in float t_min, in float t_max,
     inout HitRecord rec) {
     HitRecord temp_rec;
     bool hit_anything = false;
@@ -114,8 +114,7 @@ bool hit(in Ray r, in Sphere[1] spheres, in float t_min, in float t_max,
     return hit_anything;
 }
 
-// Determine a linearly interpreted color value
-vec3 color(in Ray r, in Sphere[1] spheres) {
+vec3 render(in Ray r, in Sphere[2] spheres) {
     HitRecord rec;
     // Iterate over all spheres for now
     if (hit(r, spheres, 0.0, INFINITY, rec)) {
@@ -133,12 +132,12 @@ void main() {
     vec2 uv = vec2(gl_GlobalInvocationID.xy) / dim;
 
     // Add some spheres
-    Sphere spheres[1] = Sphere[1](Sphere(vec3(0, 0, -1), 0.5));
-                                  //Sphere(vec3(0, -100.5, -1), 100));
+    Sphere spheres[2] = Sphere[2](Sphere(vec3(0, 0, -1), 0.5),
+                                  Sphere(vec3(0, -100.5, -1), 100));
 
     Ray r = Ray(cam.origin,
                 cam.lower_left_corner + uv.x * cam.horizontal + uv.y * cam.vertical);
 
-    lowp vec3 finalColor = color(r, spheres);
+    lowp vec3 finalColor = render(r, spheres);
     imageStore(resultImage, ivec2(gl_GlobalInvocationID.xy), vec4(finalColor, 0.0));
 }
