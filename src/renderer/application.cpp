@@ -245,8 +245,20 @@ void odin::Application::createTriangleBuffer() {
 
 void odin::Application::createUniformBuffers() {
   // Create a UBO to pass various information to the compute shader
-  VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+  VkDeviceSize bufferSize = sizeof(Camera);
   computeUbo = std::make_unique<UniformBuffer>(*deviceManager, bufferSize);
+
+  // Initialize camera
+  Camera cam;
+  cam.init();
+
+  // Copy camera data into memory
+  void* data;
+  vkMapMemory(deviceManager->getLogicalDevice(), computeUbo->getDeviceMemory(),
+              0, sizeof(cam), 0, &data);
+  memcpy(data, &cam, sizeof(cam));
+  vkUnmapMemory(deviceManager->getLogicalDevice(),
+                computeUbo->getDeviceMemory());
 }
 
 void odin::Application::drawFrame() {
@@ -533,32 +545,5 @@ void odin::Application::run() {
 // TODO Read up on what 'Push Constants' are. These are more efficient
 // compared to the current way of allocating UBOs
 void odin::Application::updateUniformBuffer(uint32_t currentImage) {
-  static auto startTime = std::chrono::high_resolution_clock::now();
-
-  auto currentTime = std::chrono::high_resolution_clock::now();
-  float time = std::chrono::duration<float, std::chrono::seconds::period>(
-                   currentTime - startTime)
-                   .count();
-
-  auto swapChainExtent = swapChain->getExtent();
-  UniformBufferObject ubo;
-  ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f),
-                          glm::vec3(0.0f, 0.0f, 1.0f));
-  ubo.view =
-      glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                  glm::vec3(0.0f, 0.0f, 1.0f));
-  ubo.proj = glm::perspective(
-      glm::radians(45.0f),
-      swapChainExtent.width / static_cast<float>(swapChainExtent.height), 0.1f,
-      10.0f);
-
-  // Flip the y-axis of the projection matrix since OpenGL has inverted axis
-  ubo.proj[1][1] *= -1;
-
-  void* data;
-  vkMapMemory(deviceManager->getLogicalDevice(), computeUbo->getDeviceMemory(),
-              0, sizeof(ubo), 0, &data);
-  memcpy(data, &ubo, sizeof(ubo));
-  vkUnmapMemory(deviceManager->getLogicalDevice(),
-                computeUbo->getDeviceMemory());
+  // TODO Implement
 }
