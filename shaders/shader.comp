@@ -47,16 +47,16 @@ struct Ray {
     mediump vec3 B;
 } ray;
 
-vec3 ray_origin(in Ray r) {
-    return r.A;
+vec3 ray_origin(in Ray ray) {
+    return ray.A;
 }
 
-vec3 ray_direction(in Ray r) {
-    return r.B;
+vec3 ray_direction(in Ray ray) {
+    return ray.B;
 }
 
-vec3 ray_point_at_param(in Ray r, in float t) {
-    return r.A + t * r.B;
+vec3 ray_point_at_param(in Ray ray, in float t) {
+    return ray.A + t * ray.B;
 }
 
 vec3 unit_vector(in vec3 v) {
@@ -69,12 +69,12 @@ struct Sphere {
     mediump float radius;
 };
 
-bool sphere_hit(in Ray r, in Sphere sphere, in float t_min, in float t_max,
-    inout HitRecord rec) {
-    mediump vec3 oc = vec3(ray_origin(r) - sphere.center);
-    mediump vec3 direction = ray_direction(r);
-    mediump float a = dot(direction, direction);
-    mediump float b = dot(oc, direction);
+bool sphere_hit(in Ray ray, in Sphere sphere, in float t_min, in float t_max,
+    out HitRecord rec) {
+    mediump vec3 oc = vec3(ray_origin(ray) - sphere.center);
+    mediump vec3 dir = ray_direction(ray);
+    mediump float a = dot(dir, dir);
+    mediump float b = dot(oc, dir);
     mediump float c = dot(oc, oc) - sphere.radius * sphere.radius;
     mediump float discriminant = b * b - a * c;
 
@@ -83,7 +83,7 @@ bool sphere_hit(in Ray r, in Sphere sphere, in float t_min, in float t_max,
         mediump float temp = (-b - sqrt_disc) / a;
         if (temp < t_max && temp > t_min) {
             rec.t = temp;
-            rec.p = ray_point_at_param(r, rec.t);
+            rec.p = ray_point_at_param(ray, rec.t);
             rec.normal = (rec.p - sphere.center) / sphere.radius;
             return true;
         }
@@ -91,7 +91,7 @@ bool sphere_hit(in Ray r, in Sphere sphere, in float t_min, in float t_max,
         temp = (-b + sqrt_disc) / a;
         if (temp < t_max && temp > t_min) {
             rec.t = temp;
-            rec.p = ray_point_at_param(r, rec.t);
+            rec.p = ray_point_at_param(ray, rec.t);
             rec.normal = (rec.p - sphere.center) / sphere.radius;
             return true;
         }
@@ -99,13 +99,13 @@ bool sphere_hit(in Ray r, in Sphere sphere, in float t_min, in float t_max,
     return false;
 }
 
-bool hit(in Ray r, in Sphere[2] spheres, in float t_min, in float t_max,
-    inout HitRecord rec) {
+bool intersect(in Ray ray, in Sphere[2] spheres, in float t_min, in float t_max,
+    out HitRecord rec) {
     HitRecord temp_rec;
     bool hit_anything = false;
     mediump float closest_so_far = t_max;
     for (int i = 0; i < spheres.length(); i++) {
-        if (sphere_hit(r, spheres[i], t_min, closest_so_far, temp_rec)) {
+        if (sphere_hit(ray, spheres[i], t_min, closest_so_far, temp_rec)) {
             hit_anything = true;
             closest_so_far = temp_rec.t;
             rec = temp_rec;
@@ -114,30 +114,30 @@ bool hit(in Ray r, in Sphere[2] spheres, in float t_min, in float t_max,
     return hit_anything;
 }
 
-vec3 render(in Ray r, in Sphere[2] spheres) {
+vec3 render(in Ray ray, in Sphere[2] spheres) {
     HitRecord rec;
     // Iterate over all spheres for now
-    if (hit(r, spheres, 0.0, INFINITY, rec)) {
+    if (intersect(ray, spheres, 0.0, INFINITY, rec)) {
         return 0.5 * vec3(rec.normal + 1);
     }
     else {
-        mediump vec3 unit_direction = unit_vector(ray_direction(r));
+        mediump vec3 unit_direction = unit_vector(ray_direction(ray));
         mediump float t = 0.5 * (unit_direction.y + 1.0);
         return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
     }
 }
 
 void main() {
-    ivec2 dim = imageSize(resultImage);
-    vec2 uv = vec2(gl_GlobalInvocationID.xy) / dim;
+    mediump ivec2 dim = imageSize(resultImage);
+    mediump vec2 uv = vec2(gl_GlobalInvocationID.xy) / dim;
 
     // Add some spheres
     Sphere spheres[2] = Sphere[2](Sphere(vec3(0, 0, -1), 0.5),
                                   Sphere(vec3(0, -100.5, -1), 100));
 
-    Ray r = Ray(cam.origin,
-                cam.lower_left_corner + uv.x * cam.horizontal + uv.y * cam.vertical);
+    Ray r0 = Ray(cam.origin,
+                 cam.lower_left_corner + uv.x * cam.horizontal + uv.y * cam.vertical);
 
-    lowp vec3 finalColor = render(r, spheres);
+    lowp vec3 finalColor = render(r0, spheres);
     imageStore(resultImage, ivec2(gl_GlobalInvocationID.xy), vec4(finalColor, 0.0));
 }
