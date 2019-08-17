@@ -132,8 +132,8 @@ void main() {
     mediump vec2 uv = vec2(gl_GlobalInvocationID.xy) / dim;
 
     // Add some spheres
-    Sphere spheres[2] = Sphere[2](Sphere(vec3(0, 0, -1), 0.5),
-                                  Sphere(vec3(0, -100.5, -1), 100));
+    Sphere spheres[2] = Sphere[2](Sphere(vec3(0.0, 0.0, -1.0), 0.5),
+                                  Sphere(vec3(0.0, -100.5, -1.0), 100.0));
 
     Ray r0 = Ray(cam.origin,
                  cam.lower_left_corner + uv.x * cam.horizontal + uv.y * cam.vertical);

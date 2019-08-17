@@ -81,7 +81,8 @@ void odin::CommandPool::createComputeCommandBuffers(
                           computePipeline.getPipelineLayout(), 0, 1,
                           descriptorPool.getComputeDescriptorSet(), 0, 0);
   // Break up raytracing task into work groups
-  vkCmdDispatch(computeCommandBuffer, texWidth / 16, texHeight / 16, 1);
+  vkCmdDispatch(computeCommandBuffer, texWidth / WORK_GROUP_SIZE,
+                texHeight / WORK_GROUP_SIZE, 1);
 
   vkEndCommandBuffer(computeCommandBuffer);
 }

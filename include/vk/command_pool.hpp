@@ -60,6 +60,7 @@ class CommandPool {
   const VkCommandPool getGraphicsCommandPool() const;
 
  private:
+  const uint32_t WORK_GROUP_SIZE = 16;
   VkCommandPool computeCommandPool;
   VkCommandPool graphicsCommandPool;
   VkCommandBuffer computeCommandBuffer;

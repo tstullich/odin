@@ -244,19 +244,18 @@ void odin::Application::createTriangleBuffer() {
 }
 
 void odin::Application::createUniformBuffers() {
+  // Initialize camera
+  camera.init();
+
   // Create a UBO to pass various information to the compute shader
   VkDeviceSize bufferSize = sizeof(Camera);
   computeUbo = std::make_unique<UniformBuffer>(*deviceManager, bufferSize);
 
-  // Initialize camera
-  Camera cam;
-  cam.init();
-
   // Copy camera data into memory
   void* data;
   vkMapMemory(deviceManager->getLogicalDevice(), computeUbo->getDeviceMemory(),
-              0, sizeof(cam), 0, &data);
-  memcpy(data, &cam, sizeof(cam));
+              0, sizeof(camera), 0, &data);
+  memcpy(data, &camera, sizeof(camera));
   vkUnmapMemory(deviceManager->getLogicalDevice(),
                 computeUbo->getDeviceMemory());
 }
@@ -546,4 +545,10 @@ void odin::Application::run() {
 // compared to the current way of allocating UBOs
 void odin::Application::updateUniformBuffer(uint32_t currentImage) {
   // TODO Implement
+  void* data;
+  vkMapMemory(deviceManager->getLogicalDevice(), computeUbo->getDeviceMemory(),
+              0, sizeof(camera), 0, &data);
+  memcpy(data, &camera, sizeof(camera));
+  vkUnmapMemory(deviceManager->getLogicalDevice(),
+                computeUbo->getDeviceMemory());
 }

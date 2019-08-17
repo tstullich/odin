@@ -157,6 +157,7 @@ class Application {
   std::vector<Triangle> triangles;
   std::unique_ptr<TriangleBuffer> triangleBuffer;
 
+  Camera camera;
   std::unique_ptr<UniformBuffer> computeUbo;
 
   std::unique_ptr<DescriptorSetLayout> computeDescriptorSetLayout;

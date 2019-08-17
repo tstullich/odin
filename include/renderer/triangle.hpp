@@ -8,10 +8,10 @@
  */
 namespace odin {
 struct Triangle {
-  glm::vec3 v0;
-  glm::vec3 v1;
-  glm::vec3 v2;
-  glm::vec3 normal;
+  alignas(16) glm::vec3 v0;
+  alignas(16) glm::vec3 v1;
+  alignas(16) glm::vec3 v2;
+  alignas(16) glm::vec3 normal;
 
   // https://www.khronos.org/opengl/wiki/Calculating_a_Surface_Normal
   void calculateNormal() {
