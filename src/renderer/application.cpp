@@ -13,6 +13,7 @@ std::string odin::Application::MODEL_PATH;
 std::string odin::Application::TEXTURE_PATH;
 const int odin::Application::WIDTH;
 const int odin::Application::HEIGHT;
+odin::Camera odin::Application::camera;
 
 odin::Application::Application(int argc, char *argv[]) {
   if (parseArguments(argc, argv)) {
@@ -24,6 +25,26 @@ void odin::Application::framebufferResizeCallback(GLFWwindow *window, int width,
                                                   int height) {
   auto app = reinterpret_cast<Application *>(glfwGetWindowUserPointer(window));
   app->framebufferResized = true;
+}
+
+void odin::Application::keyCallback(GLFWwindow *window, int key, int scanCode,
+                                    int action, int mods) {
+  // Move the camera based on keystrokes
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+    glfwSetWindowShouldClose(window, GLFW_TRUE);
+  } else if (key == GLFW_KEY_W &&
+             (action == GLFW_PRESS || action == GLFW_REPEAT)) {
+    camera.origin.z -= 0.1;
+  } else if (key == GLFW_KEY_A &&
+             (action == GLFW_PRESS || action == GLFW_REPEAT)) {
+    camera.origin.x -= 0.1;
+  } else if (key == GLFW_KEY_S &&
+             (action == GLFW_PRESS || action == GLFW_REPEAT)) {
+    camera.origin.z += 0.1;
+  } else if (key == GLFW_KEY_D &&
+             (action == GLFW_PRESS || action == GLFW_REPEAT)) {
+    camera.origin.x += 0.1;
+  }
 }
 
 void odin::Application::cleanup() {
@@ -245,8 +266,8 @@ void odin::Application::createTriangleBuffer() {
 
 void odin::Application::createUniformBuffers() {
   // Initialize camera
-  glm::vec3 lookFrom(3.0f, 3.0f, 2.0f);
-  glm::vec3 lookAt(0.0f, 0.0f, -1.0f);
+  glm::vec3 lookFrom(0.0f, 1.0f, 6.0f);
+  glm::vec3 lookAt(0.0f, 1.0f, -1.0f);
   float distToFocus = glm::length(lookFrom - lookAt);
   float aperture = 2.0;
 
@@ -261,8 +282,8 @@ void odin::Application::createUniformBuffers() {
   // Copy camera data into memory
   void *data;
   vkMapMemory(deviceManager->getLogicalDevice(), computeUbo->getDeviceMemory(),
-              0, sizeof(camera), 0, &data);
-  memcpy(data, &camera, sizeof(camera));
+              0, sizeof(Camera), 0, &data);
+  memcpy(data, &camera, sizeof(Camera));
   vkUnmapMemory(deviceManager->getLogicalDevice(),
                 computeUbo->getDeviceMemory());
 }
@@ -386,6 +407,8 @@ void odin::Application::initWindow() {
   window = glfwCreateWindow(WIDTH, HEIGHT, "Odin", nullptr, nullptr);
   glfwSetWindowUserPointer(window, this);
   glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+
+  glfwSetKeyCallback(window, keyCallback);
 }
 
 void odin::Application::loadModel() {
@@ -551,11 +574,11 @@ void odin::Application::run() {
 // TODO Read up on what 'Push Constants' are. These are more efficient
 // compared to the current way of allocating UBOs
 void odin::Application::updateUniformBuffer(uint32_t currentImage) {
-  // TODO Implement
+  // Copy camera data into memory
   void *data;
   vkMapMemory(deviceManager->getLogicalDevice(), computeUbo->getDeviceMemory(),
-              0, sizeof(camera), 0, &data);
-  memcpy(data, &camera, sizeof(camera));
+              0, sizeof(Camera), 0, &data);
+  memcpy(data, &camera, sizeof(Camera));
   vkUnmapMemory(deviceManager->getLogicalDevice(),
                 computeUbo->getDeviceMemory());
 }

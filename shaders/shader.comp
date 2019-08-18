@@ -11,8 +11,8 @@ layout(binding = 0, rgba8) uniform writeonly image2D resultImage;
 
 const float INFINITY = 1.0 / 0.0;
 const float EPSILON = 0.001;
-const int NUM_BOUNCES = 3;
-const int NUM_SAMPLES = 32;
+const int NUM_BOUNCES = 4;
+const int NUM_SAMPLES = 16;
 
 // UBO for storing camera values
 layout(binding = 1) uniform Camera {
@@ -85,9 +85,11 @@ vec3 random_in_unit_disk(in vec2 co) {
   return p;
 }
 
-Ray get_ray(in float u, in float v) {
-  return Ray(cam.origin, cam.lower_left_corner + u * cam.horizontal +
-                             v * cam.vertical - cam.origin);
+Ray get_ray(in float s, in float t) {
+  vec3 rd = cam.lens_radius * random_in_unit_disk(vec2(s, t));
+  vec3 offset = vec3(s * rd.x, t * rd.y, 0.0);
+  return Ray(cam.origin + offset, cam.lower_left_corner + s * cam.horizontal +
+                                      t * cam.vertical - cam.origin - offset);
 }
 
 // Sphere stuff
@@ -220,7 +222,7 @@ bool scatter(in Ray ray, inout HitRecord rec, inout vec3 attentuation,
   }
 }
 
-bool intersect(in Ray ray, in Sphere[5] spheres, in float t_min, in float t_max,
+bool intersect(in Ray ray, in Sphere[4] spheres, in float t_min, in float t_max,
                inout HitRecord rec) {
   HitRecord temp_rec;
   bool hit_anything = false;
@@ -235,7 +237,7 @@ bool intersect(in Ray ray, in Sphere[5] spheres, in float t_min, in float t_max,
   return hit_anything;
 }
 
-vec3 render(in Ray ray, in Sphere[5] spheres) {
+vec3 render(in Ray ray, in Sphere[4] spheres) {
   HitRecord rec;
   vec3 total_attenuation = vec3(1.0, 1.0, 1.0);
   // Iterate for a max number of bounces
@@ -264,18 +266,16 @@ void main() {
   ivec2 dim = imageSize(resultImage);
 
   // Create materials
-  Material gray_diff = Material(vec3(0.1, 0.2, 0.5), 0.0, 0.0, 1);
-  Material gold_diff = Material(vec3(0.8, 0.8, 0.0), 0.0, 0.0, 1);
-  Material metal = Material(vec3(0.8, 0.6, 0.2), 0.0, 0.0, 2);
-  Material dielectric = Material(vec3(0.0, 0.0, 0.0), 0.0, 1.5, 3);
+  Material diff0 = Material(vec3(0.5, 0.5, 0.5), 0.0, 0.0, 1);
+  Material diff1 = Material(vec3(0.4, 0.2, 0.1), 0.0, 0.0, 1);
+  Material metal = Material(vec3(0.7, 0.6, 0.5), 0.0001, 0.0, 2);
+  Material dielectric = Material(vec3(0.0, 0.0, 0.0), 0.0001, 1.5, 3);
 
   // Add some spheres
-  Sphere spheres[5] =
-      Sphere[5](Sphere(vec3(0.0, 0.0, -1.0), 0.5, gray_diff),
-                Sphere(vec3(0.0, -100.5, -1.0), 100.0, gold_diff),
-                Sphere(vec3(1.0, 0.0, -1.0), 0.5, metal),
-                Sphere(vec3(-1.0, 0.0, -1.0), 0.5, dielectric),
-                Sphere(vec3(-1.0, 0.0, -1.0), -0.45, dielectric));
+  Sphere spheres[4] = Sphere[4](Sphere(vec3(0.0, -1000.0, 0.0), 1000.0, diff0),
+                                Sphere(vec3(0.0, 1.0, 0.0), 0.8, diff0),
+                                Sphere(vec3(-2.0, 1.0, 0.0), 0.8, diff1),
+                                Sphere(vec3(2.0, 1.0, 0.0), 0.8, metal));
 
   vec3 finalColor = vec3(0.0, 0.0, 0.0);
   // For loop to sample multiple times

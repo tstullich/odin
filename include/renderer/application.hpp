@@ -27,17 +27,17 @@
 #include <vector>
 
 #include "renderer/camera.hpp"
-#include "renderer/ubo.hpp"
 #include "renderer/triangle.hpp"
+#include "renderer/ubo.hpp"
 #include "renderer/vertex.hpp"
 #include "vk/compute_pipeline.hpp"
 #include "vk/depth_image.hpp"
 #include "vk/descriptor_pool.hpp"
 #include "vk/descriptor_set_layout.hpp"
 #include "vk/device_manager.hpp"
+#include "vk/graphics_pipeline.hpp"
 #include "vk/index_buffer.hpp"
 #include "vk/instance.hpp"
-#include "vk/graphics_pipeline.hpp"
 #include "vk/render_pass.hpp"
 #include "vk/swapchain.hpp"
 #include "vk/texture_image.hpp"
@@ -58,8 +58,8 @@ namespace odin {
 namespace po = boost::program_options;
 
 class Application {
- public:
-  Application(int argc, char* argv[]);
+public:
+  Application(int argc, char *argv[]);
 
   void run();
 
@@ -70,10 +70,15 @@ class Application {
   static std::string TEXTURE_PATH;
   static const int WIDTH = 800;
   static const int HEIGHT = 600;
+  static Camera camera;
 
- private:
-  static void framebufferResizeCallback(GLFWwindow* window, int width,
+private:
+  static void framebufferResizeCallback(GLFWwindow *window, int width,
                                         int height);
+
+  static void keyCallback(GLFWwindow *window, int key, int scanCode, int action,
+                          int mods);
+
   void cleanup();
 
   void cleanupSwapChain();
@@ -124,13 +129,13 @@ class Application {
 
   void mainLoop();
 
-  int parseArguments(int argc, char* argv[]);
+  int parseArguments(int argc, char *argv[]);
 
   void recreateSwapChain();
 
   void updateUniformBuffer(uint32_t currentImage);
 
-  GLFWwindow* window;
+  GLFWwindow *window;
 
   std::unique_ptr<odin::Instance> instance;
   VkSurfaceKHR surface;
@@ -157,7 +162,7 @@ class Application {
   std::vector<Triangle> triangles;
   std::unique_ptr<TriangleBuffer> triangleBuffer;
 
-  Camera camera;
+  //Camera camera;
   std::unique_ptr<UniformBuffer> computeUbo;
 
   std::unique_ptr<DescriptorSetLayout> computeDescriptorSetLayout;
@@ -174,5 +179,5 @@ class Application {
 
   const int MAX_FRAMES_IN_FLIGHT = 2;
 };
-}  // namespace odin
-#endif  // ODIN_APPLICATION_HPP
+} // namespace odin
+#endif // ODIN_APPLICATION_HPP
