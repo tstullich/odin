@@ -14,15 +14,15 @@ std::string odin::Application::TEXTURE_PATH;
 const int odin::Application::WIDTH;
 const int odin::Application::HEIGHT;
 
-odin::Application::Application(int argc, char* argv[]) {
+odin::Application::Application(int argc, char *argv[]) {
   if (parseArguments(argc, argv)) {
     throw std::runtime_error("Unable to parse command line arguments!");
   }
 }
 
-void odin::Application::framebufferResizeCallback(GLFWwindow* window, int width,
+void odin::Application::framebufferResizeCallback(GLFWwindow *window, int width,
                                                   int height) {
-  auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+  auto app = reinterpret_cast<Application *>(glfwGetWindowUserPointer(window));
   app->framebufferResized = true;
 }
 
@@ -245,14 +245,21 @@ void odin::Application::createTriangleBuffer() {
 
 void odin::Application::createUniformBuffers() {
   // Initialize camera
-  camera.init();
+  glm::vec3 lookFrom(3.0f, 3.0f, 2.0f);
+  glm::vec3 lookAt(0.0f, 0.0f, -1.0f);
+  float distToFocus = glm::length(lookFrom - lookAt);
+  float aperture = 2.0;
+
+  camera.init(lookFrom, lookAt, glm::vec3(0.0f, 1.0f, 0.0f), 20,
+              static_cast<float>(WIDTH) / static_cast<float>(HEIGHT), aperture,
+              distToFocus);
 
   // Create a UBO to pass various information to the compute shader
   VkDeviceSize bufferSize = sizeof(Camera);
   computeUbo = std::make_unique<UniformBuffer>(*deviceManager, bufferSize);
 
   // Copy camera data into memory
-  void* data;
+  void *data;
   vkMapMemory(deviceManager->getLogicalDevice(), computeUbo->getDeviceMemory(),
               0, sizeof(camera), 0, &data);
   memcpy(data, &camera, sizeof(camera));
@@ -394,9 +401,9 @@ void odin::Application::loadModel() {
 
   // For efficiency we only want unique vertices
   std::unordered_map<Vertex, uint32_t> uniqueVertices = {};
-  for (auto const& shape : shapes) {
+  for (auto const &shape : shapes) {
     size_t indexOffset = 0;
-    for (auto const& faceIdx : shape.mesh.num_face_vertices) {
+    for (auto const &faceIdx : shape.mesh.num_face_vertices) {
       Triangle triangle = {};
       auto idx = shape.mesh.indices[indexOffset];
       triangle.v0 = {attrib.vertices[3 * idx.vertex_index + 0],
@@ -431,7 +438,7 @@ void odin::Application::mainLoop() {
   vkDeviceWaitIdle(deviceManager->getLogicalDevice());
 }
 
-int odin::Application::parseArguments(int argc, char* argv[]) {
+int odin::Application::parseArguments(int argc, char *argv[]) {
   po::options_description desc("Allowed options");
   desc.add_options()("help", "Produce help message")(
       "demo", "Runs renderer with pre-defined values")(
@@ -545,7 +552,7 @@ void odin::Application::run() {
 // compared to the current way of allocating UBOs
 void odin::Application::updateUniformBuffer(uint32_t currentImage) {
   // TODO Implement
-  void* data;
+  void *data;
   vkMapMemory(deviceManager->getLogicalDevice(), computeUbo->getDeviceMemory(),
               0, sizeof(camera), 0, &data);
   memcpy(data, &camera, sizeof(camera));
