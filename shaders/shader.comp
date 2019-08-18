@@ -172,10 +172,9 @@ bool intersect(in Ray ray, in Sphere[4] spheres, in float t_min, in float t_max,
 
 vec3 render(in Ray ray, in Sphere[4] spheres) {
   HitRecord rec;
-  // Iterate for a max number of bounces
-  int i = NUM_BOUNCES;
   vec3 total_attenuation = vec3(1.0, 1.0, 1.0);
-  while (i > 0) {
+  // Iterate for a max number of bounces
+  for (int i = 0; i < NUM_BOUNCES; i++) {
     if (intersect(ray, spheres, EPSILON, INFINITY, rec)) {
       // Intersected an object and need to bounce the ray
       Ray scattered;
@@ -193,7 +192,6 @@ vec3 render(in Ray ray, in Sphere[4] spheres) {
       return total_attenuation *
              ((1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0));
     }
-    i--;
   }
 }
 
