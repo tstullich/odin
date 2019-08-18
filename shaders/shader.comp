@@ -10,7 +10,7 @@ layout(binding = 0, rgba8) uniform writeonly image2D resultImage;
 const float INFINITY = 1.0 / 0.0;
 const float EPSILON = 0.001;
 const int NUM_BOUNCES = 4;
-const int NUM_SAMPLES = 16;
+const int NUM_SAMPLES = 32;
 
 // UBO for storing camera values
 layout(binding = 1) uniform Camera {
@@ -46,6 +46,7 @@ const int METAL = 2;
 const int DIELECTRIC = 3;
 struct Material {
   vec3 albedo;
+  float fuzz;
   int scatter_function;
 };
 
@@ -109,6 +110,7 @@ bool sphere_hit(in Ray ray, in Sphere sphere, in float t_min, in float t_max,
       rec.t = temp;
       rec.p = ray_point_at_param(ray, rec.t);
       rec.normal = (rec.p - sphere.center) / sphere.radius;
+      rec.mat = sphere.mat;
       return true;
     }
 
@@ -117,6 +119,7 @@ bool sphere_hit(in Ray ray, in Sphere sphere, in float t_min, in float t_max,
       rec.t = temp;
       rec.p = ray_point_at_param(ray, rec.t);
       rec.normal = (rec.p - sphere.center) / sphere.radius;
+      rec.mat = sphere.mat;
       return true;
     }
   }
@@ -134,7 +137,8 @@ bool scatter_lambertian(in Ray ray, in HitRecord rec, inout vec3 attenuation,
 bool scatter_metal(in Ray r_in, in HitRecord rec, inout vec3 attentuation,
                    inout Ray scattered) {
   vec3 reflected = reflect(unit_vector(ray_direction(r_in)), rec.normal);
-  scattered = Ray(rec.p, reflected);
+  scattered =
+      Ray(rec.p, reflected + rec.mat.fuzz * random_in_unit_sphere(rec.p));
   attentuation = rec.mat.albedo;
   return dot(ray_direction(scattered), rec.normal) > 0.0;
 }
@@ -166,7 +170,7 @@ bool intersect(in Ray ray, in Sphere[4] spheres, in float t_min, in float t_max,
   return hit_anything;
 }
 
-vec3 render(in Ray ray, in Sphere[4] spheres, in int depth) {
+vec3 render(in Ray ray, in Sphere[4] spheres) {
   HitRecord rec;
   // Iterate for a max number of bounces
   int i = NUM_BOUNCES;
@@ -176,7 +180,7 @@ vec3 render(in Ray ray, in Sphere[4] spheres, in int depth) {
       // Intersected an object and need to bounce the ray
       Ray scattered;
       vec3 attenuation;
-      if (depth < 50 && scatter(ray, rec, attenuation, scattered)) {
+      if (scatter(ray, rec, attenuation, scattered)) {
         total_attenuation *= attenuation;
         ray = scattered;
       } else {
@@ -189,7 +193,6 @@ vec3 render(in Ray ray, in Sphere[4] spheres, in int depth) {
       return total_attenuation *
              ((1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0));
     }
-    depth++;
     i--;
   }
 }
@@ -198,10 +201,10 @@ void main() {
   ivec2 dim = imageSize(resultImage);
 
   // Create materials
-  Material gray_diff = Material(vec3(0.8, 0.3, 0.3), 1);
-  Material gold_diff = Material(vec3(0.8, 0.8, 0.0), 1);
-  Material metal0 = Material(vec3(0.8, 0.6, 0.2), 2);
-  Material metal1 = Material(vec3(0.8, 0.8, 0.8), 2);
+  Material gray_diff = Material(vec3(0.8, 0.3, 0.3), 0.0, 1);
+  Material gold_diff = Material(vec3(0.8, 0.8, 0.0), 0.0, 1);
+  Material metal0 = Material(vec3(0.8, 0.6, 0.2), 0.3, 2);
+  Material metal1 = Material(vec3(0.8, 0.8, 0.8), 1.0, 2);
 
   // Add some spheres
   Sphere spheres[4] =
@@ -211,14 +214,14 @@ void main() {
                 Sphere(vec3(-1.0, 0.0, -1.0), 0.5, metal1));
 
   vec3 finalColor = vec3(0.0, 0.0, 0.0);
-  // For loop to sample the pixel multiple times
+  // For loop to sample multiple times
   for (int s = 0; s < NUM_SAMPLES; s++) {
     float u =
         (gl_GlobalInvocationID.x + rand(gl_GlobalInvocationID.xy + s)) / dim.x;
     float v =
         (gl_GlobalInvocationID.y + rand(gl_GlobalInvocationID.xy + s)) / dim.y;
     Ray r0 = get_ray(u, v);
-    finalColor += render(r0, spheres, 0);
+    finalColor += render(r0, spheres);
   }
 
   // Normalize the color with the number of samples
