@@ -18,8 +18,8 @@ struct Camera {
             float aspect, float aperture, float focusDist) {
     lens_radius = aperture / 2.0f;
     glm::vec3 u, v, w;
-    float theta = vfov * M_PI / 180;
-    float half_height = glm::tan(theta / 2);
+    float theta = vfov * M_PI / 180.0f;
+    float half_height = glm::tan(theta / 2.0f);
     float half_width = aspect * half_height;
     origin = lookFrom;
     w = glm::normalize(lookFrom - lookAt);

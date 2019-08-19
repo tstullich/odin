@@ -26,6 +26,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "renderer/aabb.hpp"
+#include "renderer/bvh.hpp"
 #include "renderer/camera.hpp"
 #include "renderer/triangle.hpp"
 #include "renderer/ubo.hpp"
