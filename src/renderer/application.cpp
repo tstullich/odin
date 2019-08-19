@@ -465,12 +465,6 @@ int odin::Application::parseArguments(int argc, char *argv[]) {
   po::options_description desc("Allowed options");
   desc.add_options()("help", "Produce help message")(
       "demo", "Runs renderer with pre-defined values")(
-      "cs", po::value<std::string>(&COMPUTE_SHADER_PATH),
-      "Compute shader path (SPIR-V)")(
-      "vs", po::value<std::string>(&VERTEX_SHADER_PATH),
-      "Vertex shader path (SPIR-V)")(
-      "fs", po::value<std::string>(&FRAGMENT_SHADER_PATH),
-      "Fragment shader path (SPIR-V)")(
       "obj", po::value<std::string>(&MODEL_PATH), "OBJ model file path")(
       "tex", po::value<std::string>(&TEXTURE_PATH), "Texture file path");
 
@@ -483,43 +477,17 @@ int odin::Application::parseArguments(int argc, char *argv[]) {
     return 1;
   }
 
+  // Set these by default
+  COMPUTE_SHADER_PATH = "shaders/comp.spv";
+  FRAGMENT_SHADER_PATH = "shaders/frag.spv";
+  VERTEX_SHADER_PATH = "shaders/vert.spv";
+
   // Check if we have enabled demo mode
   if (vm.count("demo")) {
     std::cout << "Running in demo mode" << std::endl;
-    COMPUTE_SHADER_PATH = "shaders/comp.spv";
-    FRAGMENT_SHADER_PATH = "shaders/frag.spv";
-    VERTEX_SHADER_PATH = "shaders/vert.spv";
     MODEL_PATH = "models/triangle.obj";
     TEXTURE_PATH = "textures/texture.jpg";
     return 0;
-  }
-
-  if (vm.count("cs")) {
-    std::cout << "Compute shader path: " << COMPUTE_SHADER_PATH << std::endl;
-  } else {
-    std::cout
-        << "Compute shader was not specified! Please specify the file path"
-        << std::endl;
-    std::cout << desc << std::endl;
-    return 1;
-  }
-
-  if (vm.count("vs")) {
-    std::cout << "Vertex shader path: " << VERTEX_SHADER_PATH << std::endl;
-  } else {
-    std::cout << "Vertex shader was not specified! Please specify the file path"
-              << std::endl;
-    std::cout << desc << std::endl;
-    return 1;
-  }
-
-  if (vm.count("fs")) {
-    std::cout << "Fragment shader path: " << FRAGMENT_SHADER_PATH << std::endl;
-  } else {
-    std::cout
-        << "Fragment shader was not specified! Please specify the file path"
-        << std::endl;
-    return 1;
   }
 
   if (vm.count("obj")) {
