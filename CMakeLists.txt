@@ -17,6 +17,10 @@ set(TINY_OBJ_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/tinyobjloader)
 set(ODIN_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(ODIN_INSTALL_BIN_DIR ${PROJECT_SOURCE_DIR}/bin)
 
+# Adding different compiler flags for debug and release
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -O3")
+
 find_package(Git QUIET)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     # Update submodules as needed

@@ -25,9 +25,6 @@ set(SOURCE_FILES
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
-# Used for debugging
-target_compile_options(${PROJECT_NAME} PUBLIC -Wall)
-
 target_link_libraries(${PROJECT_NAME}
                         glfw Vulkan::Vulkan
                         ${VULKAN_SDK/lib}
