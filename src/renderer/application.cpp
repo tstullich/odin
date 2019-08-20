@@ -416,6 +416,7 @@ void odin::Application::initWindow() {
 }
 
 void odin::Application::loadModel() {
+  std::cout << "Loading model" << std::endl;
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
   std::vector<tinyobj::material_t> materials;
@@ -452,6 +453,7 @@ void odin::Application::loadModel() {
       indexOffset += faceIdx;
     }
   }
+  std::cout << "Finished loading models" << std::endl;
 }
 
 void odin::Application::mainLoop() {

@@ -14,6 +14,7 @@ struct AABB {
   alignas(16) glm::vec3 min;
   alignas(16) glm::vec3 max;
 
+  // Build a surrounding box from two AABBs
   static AABB surroundingBox(AABB box0, AABB box1) {
     glm::vec3 small(ffmin(box0.min.x, box1.min.x),
                     ffmin(box0.min.y, box1.min.y),

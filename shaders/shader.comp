@@ -11,49 +11,10 @@ precision mediump float;
 
 // Defining some constants
 // This will only work in GLSL 4.4 and above!
-#define M_PI 3.1415926535897932384626433832795
-
 const float INFINITY = 1.0 / 0.0;
 const float EPSILON = 0.001;
 const int NUM_BOUNCES = 4;
 const int NUM_SAMPLES = 16;
-
-// UBO for storing camera values
-layout(binding = 1) uniform Camera {
-  vec3 origin;
-  vec3 lower_left_corner;
-  vec3 horizontal;
-  vec3 vertical;
-  vec3 u;
-  vec3 v;
-  vec3 w;
-  float time0;
-  float time1;
-  float lens_radius;
-}
-cam;
-
-// Dummy for testing
-struct AABB {
-  vec3 min;
-  vec3 max;
-};
-
-struct Triangle {
-  vec3 v0;
-  vec3 v1;
-  vec3 v2;
-  vec3 normal;
-};
-
-// Dummy for testing
-struct BvhNode {
-  Triangle left;
-  Triangle right;
-  AABB box;
-};
-
-layout(std140, binding = 2) buffer Triangles { Triangle triangles[]; };
 
 // Function for generating pseudo-random numbers
 // https://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl
@@ -73,6 +34,42 @@ float GPURnd(inout vec4 state) {
   state = (p + beta);
   return fract(dot(state / m, vec4(1.0, -1.0, 1.0, -1.0)));
 }
+
+
+// UBO for storing camera values
+layout(binding = 1) uniform Camera {
+  vec3 origin;
+  vec3 lower_left_corner;
+  vec3 horizontal;
+  vec3 vertical;
+  vec3 u;
+  vec3 v;
+  vec3 w;
+  float time0;
+  float time1;
+  float lens_radius;
+}
+cam;
+
+struct AABB {
+  vec3 min;
+  vec3 max;
+};
+
+struct Triangle {
+  vec3 v0;
+  vec3 v1;
+  vec3 v2;
+  vec3 normal;
+};
+
+struct BvhNode {
+  Triangle left;
+  Triangle right;
+  AABB box;
+};
+
+layout(std140, binding = 2) buffer BVH { BvhNode nodes[]; };
 
 // Struct to describe material interaction. The material type
 // is IDed through a simple integer. The mapping is as follows:

@@ -3,7 +3,7 @@
 
 odin::BvhBuffer::BvhBuffer(const DeviceManager &deviceManager,
                            const CommandPool &commandPool,
-                           const std::vector<BVH_Node> &nodes) {
+                           const std::vector<BvhNode> &nodes) {
   numNodes = nodes.size();
   VkDeviceSize bufferSize = sizeof(nodes[0]) * numNodes;
   VkBuffer stagingBuffer;

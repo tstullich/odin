@@ -13,14 +13,14 @@
 
 namespace odin {
 
-struct BVH_Node {
+struct BvhNode {
   Triangle left;
   Triangle right;
   AABB box;
 };
 
 struct BVH {
-  std::vector<BVH_Node> nodes;
+  std::vector<BvhNode> nodes;
 
 public:
   void init(std::vector<Triangle> &triangles) {
@@ -54,7 +54,7 @@ private:
     }
 
     // Decide where to place the geometry into the leaf node
-    BVH_Node node;
+    BvhNode node;
     if (n == 1) {
       // If we only have 1 element we copy it into both leaves
       node.left = node.right = triangles[0];

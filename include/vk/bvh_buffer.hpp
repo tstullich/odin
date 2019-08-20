@@ -18,7 +18,7 @@ class CommandPool;
 class BvhBuffer : public Buffer {
 public:
   BvhBuffer(const DeviceManager &deviceManager, const CommandPool &commandPool,
-            const std::vector<BVH_Node> &nodes);
+            const std::vector<BvhNode> &nodes);
 
   ~BvhBuffer();
 

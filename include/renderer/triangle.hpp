@@ -1,8 +1,8 @@
 #ifndef ODIN_TRIANGLE_HPP
 #define ODIN_TRIANGLE_HPP
 
-#include <glm/glm.hpp>
 #include <exception>
+#include <glm/glm.hpp>
 
 #include "renderer/aabb.hpp"
 
@@ -26,9 +26,21 @@ struct Triangle {
   };
 
   bool boundingBox(float t0, float t1, AABB aabb) {
-    // TODO Implement
-    box = aabb;
+    box = surroundingBox(v0, v1, v2);
+    aabb = box;
     return true;
+  }
+
+  // Calculate the bounding box based on 3 vertices
+  AABB surroundingBox(const glm::vec3 &a, const glm::vec3 &b,
+                      const glm::vec3 &c) {
+    glm::vec3 small(ffmin(ffmin(a.x, b.x), c.x), ffmin(ffmin(a.y, b.y), c.y),
+                    ffmin(ffmin(a.z, b.z), c.z));
+
+    glm::vec3 big(ffmax(ffmax(a.x, b.x), c.x), ffmax(ffmax(a.y, b.y), c.y),
+                  ffmax(ffmax(a.z, b.z), c.z));
+
+    return AABB{small, big};
   }
 };
 
