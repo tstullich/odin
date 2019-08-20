@@ -12,13 +12,16 @@
 #include "renderer/triangle.hpp"
 
 namespace odin {
-
+// A struct describing a node in the BVH. The leaf nodes
+// will store the actual geometry
 struct BvhNode {
   Triangle left;
   Triangle right;
   AABB box;
 };
 
+// A struct encapsulating data for a Bounding Volume Hierarchy.
+// This should help to accelerate the raytracing done in the compute shader
 struct BVH {
   std::vector<BvhNode> nodes;
 

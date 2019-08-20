@@ -276,7 +276,7 @@ void odin::Application::createUniformBuffers() {
 
   camera.init(lookFrom, lookAt, glm::vec3(0.0f, 1.0f, 0.0f), 20,
               static_cast<float>(WIDTH) / static_cast<float>(HEIGHT), aperture,
-              distToFocus, 0.0, 1.0);
+              distToFocus);
 
   // Create a UBO to pass various information to the compute shader
   VkDeviceSize bufferSize = sizeof(Camera);

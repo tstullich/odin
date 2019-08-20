@@ -35,7 +35,6 @@ float GPURnd(inout vec4 state) {
   return fract(dot(state / m, vec4(1.0, -1.0, 1.0, -1.0)));
 }
 
-
 // UBO for storing camera values
 layout(binding = 1) uniform Camera {
   vec3 origin;
@@ -45,8 +44,6 @@ layout(binding = 1) uniform Camera {
   vec3 u;
   vec3 v;
   vec3 w;
-  float time0;
-  float time1;
   float lens_radius;
 }
 cam;
@@ -105,7 +102,6 @@ struct Sphere {
 struct Ray {
   vec3 origin;
   vec3 direction;
-  float time;
 };
 
 vec3 ray_point_at_param(in Ray ray, in float t) {
@@ -136,11 +132,8 @@ vec3 random_in_unit_sphere(vec3 p) {
 Ray get_ray(in float s, in float t) {
   vec3 rd = cam.lens_radius * random_in_unit_disk(vec2(s, t));
   vec3 offset = vec3(cam.u * rd.x + cam.v * rd.y);
-  float time = cam.time0 + rand(vec2(s, t)) * (cam.time1 - cam.time0);
-  return Ray(cam.origin + offset,
-             cam.lower_left_corner + s * cam.horizontal + t * cam.vertical -
-                 cam.origin - offset,
-             time);
+  return Ray(cam.origin + offset, cam.lower_left_corner + s * cam.horizontal +
+                                      t * cam.vertical - cam.origin - offset);
 }
 
 bool aabb_hit(in Ray ray, in AABB box, in float t_min, in float t_max) {
@@ -227,7 +220,7 @@ bool sphere_hit(in Ray ray, in Sphere sphere, in float t_min, in float t_max,
 bool scatter_lambertian(in Ray ray, in HitRecord rec, inout vec3 attenuation,
                         inout Ray scattered) {
   vec3 target = rec.p + rec.normal + random_in_unit_sphere(rec.p);
-  scattered = Ray(rec.p, target - rec.p, ray.time);
+  scattered = Ray(rec.p, target - rec.p);
   attenuation = rec.mat.albedo;
   return true;
 }
@@ -235,8 +228,8 @@ bool scatter_lambertian(in Ray ray, in HitRecord rec, inout vec3 attenuation,
 bool scatter_metal(in Ray ray, in HitRecord rec, inout vec3 attentuation,
                    inout Ray scattered) {
   vec3 reflected = reflect(normalize(ray.direction), rec.normal);
-  scattered = Ray(
-      rec.p, reflected + rec.mat.fuzz * random_in_unit_sphere(rec.p), ray.time);
+  scattered =
+      Ray(rec.p, reflected + rec.mat.fuzz * random_in_unit_sphere(rec.p));
   attentuation = rec.mat.albedo;
   return dot(scattered.direction, rec.normal) > 0.0;
 }
@@ -282,14 +275,14 @@ bool scatter_dielectric(in Ray ray, inout HitRecord rec,
   if (refract(ray.direction, outward_normal, ni_over_nt, refracted)) {
     reflect_prob = schlick(cosine, rec.mat.ref_idx);
   } else {
-    scattered = Ray(rec.p, reflected, ray.time);
+    scattered = Ray(rec.p, reflected);
     reflect_prob = 1.0;
   }
 
   if (rand(ray.direction.xy) < reflect_prob) {
-    scattered = Ray(rec.p, reflected, ray.time);
+    scattered = Ray(rec.p, reflected);
   } else {
-    scattered = Ray(rec.p, refracted, ray.time);
+    scattered = Ray(rec.p, refracted);
   }
 
   return true;

@@ -12,14 +12,10 @@ struct Camera {
   alignas(16) glm::vec3 u;
   alignas(16) glm::vec3 v;
   alignas(16) glm::vec3 w;
-  alignas(16) float time0;
-  alignas(16) float time1;
   alignas(16) float lens_radius;
 
   void init(glm::vec3 lookFrom, glm::vec3 lookAt, glm::vec3 vUp, float vfov,
-            float aspect, float aperture, float focusDist, float t0, float t1) {
-    time0 = t0;
-    time1 = t1;
+            float aspect, float aperture, float focusDist) {
     lens_radius = aperture / 2.0f;
     glm::vec3 u, v, w;
     float theta = vfov * M_PI / 180.0f;
