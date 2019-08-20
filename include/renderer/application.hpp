@@ -81,6 +81,8 @@ private:
   static void keyCallback(GLFWwindow *window, int key, int scanCode, int action,
                           int mods);
 
+  void buildBvh();
+
   void cleanup();
 
   void cleanupSwapChain();
@@ -161,6 +163,7 @@ private:
 
   bool framebufferResized = false;
 
+  BVH bvh;
   std::vector<Triangle> triangles;
   std::unique_ptr<TriangleBuffer> triangleBuffer;
 

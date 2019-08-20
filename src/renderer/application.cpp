@@ -29,22 +29,25 @@ void odin::Application::framebufferResizeCallback(GLFWwindow *window, int width,
 
 void odin::Application::keyCallback(GLFWwindow *window, int key, int scanCode,
                                     int action, int mods) {
+  bool keyPressed = (action == GLFW_PRESS || action == GLFW_REPEAT);
   // Move the camera based on keystrokes
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, GLFW_TRUE);
-  } else if (key == GLFW_KEY_W &&
-             (action == GLFW_PRESS || action == GLFW_REPEAT)) {
+  } else if (key == GLFW_KEY_W && keyPressed) {
     camera.origin.z -= 0.1;
-  } else if (key == GLFW_KEY_A &&
-             (action == GLFW_PRESS || action == GLFW_REPEAT)) {
+  } else if (key == GLFW_KEY_A && keyPressed) {
     camera.origin.x -= 0.1;
-  } else if (key == GLFW_KEY_S &&
-             (action == GLFW_PRESS || action == GLFW_REPEAT)) {
+  } else if (key == GLFW_KEY_S && keyPressed) {
     camera.origin.z += 0.1;
-  } else if (key == GLFW_KEY_D &&
-             (action == GLFW_PRESS || action == GLFW_REPEAT)) {
+  } else if (key == GLFW_KEY_D && keyPressed) {
     camera.origin.x += 0.1;
   }
+}
+
+void odin::Application::buildBvh() {
+  std::cout << "Building BVH" << std::endl;
+  bvh.init(triangles);
+  std::cout << "Finished building BVH" << std::endl;
 }
 
 void odin::Application::cleanup() {
@@ -273,7 +276,7 @@ void odin::Application::createUniformBuffers() {
 
   camera.init(lookFrom, lookAt, glm::vec3(0.0f, 1.0f, 0.0f), 20,
               static_cast<float>(WIDTH) / static_cast<float>(HEIGHT), aperture,
-              distToFocus);
+              distToFocus, 0.0, 1.0);
 
   // Create a UBO to pass various information to the compute shader
   VkDeviceSize bufferSize = sizeof(Camera);
@@ -380,6 +383,7 @@ void odin::Application::initVulkan() {
   createInstance();
   createSurface();
   createDeviceManager();
+  loadModel();
   createUniformBuffers();
   createDescriptorSetLayouts();
   createSwapChain();
@@ -389,7 +393,6 @@ void odin::Application::initVulkan() {
   createTextureImage();
   createGraphicsPipeline();
   createComputePipeline();
-  loadModel();
   createTriangleBuffer();
   createDescriptorPool();
   createDepthResources();

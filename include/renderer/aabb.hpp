@@ -4,19 +4,15 @@
 #include <glm/glm.hpp>
 
 namespace odin {
+// Inlining these two functions which have less error checks
+// than the standard fmin/fmax
 inline float ffmin(float a, float b) { return a < b ? a : b; }
-
 inline float ffmax(float a, float b) { return a > b ? a : b; }
 
 // A struct that describes an Axis-Aligned Bounding Box
 struct AABB {
   alignas(16) glm::vec3 min;
   alignas(16) glm::vec3 max;
-
-  void init(const glm::vec3 &a, const glm::vec3 &b) {
-    min = a;
-    max = b;
-  }
 
   static AABB surroundingBox(AABB box0, AABB box1) {
     glm::vec3 small(ffmin(box0.min.x, box1.min.x),
