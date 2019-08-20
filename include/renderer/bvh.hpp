@@ -25,16 +25,16 @@ struct BVH {
 public:
   void init(std::vector<Triangle> &triangles) {
     if (triangles.size() == 0) {
-      throw std::runtime_error("No triangles available to build!");
+      throw std::runtime_error("No triangles available to build BVH!");
     }
 
-    buildBVH(triangles, triangles.size(), 0.0, 1.0);
+    buildBVH(triangles, triangles.size());
     // Reverse our vector so we have a proper ordering for the nodes
     std::reverse(nodes.begin(), nodes.end());
   }
 
 private:
-  void buildBVH(std::vector<Triangle> &triangles, int n, float t0, float t1) {
+  void buildBVH(std::vector<Triangle> &triangles, int n) {
     // Setup random number generator
     std::random_device dev;
     std::mt19937 rng(dev());
@@ -63,17 +63,17 @@ private:
       node.right = triangles[1];
     } else {
       // Recursion to divide triangle list into two search spaces
-      buildBVH(triangles, n / 2, t0, t1);
+      buildBVH(triangles, n / 2);
 
       // Create an iterator for the second half of the triangles array
       auto first = triangles.begin() + (n / 2);
       std::vector<Triangle> rightSide(first, triangles.end());
-      buildBVH(rightSide, n - n / 2, t0, t1);
+      buildBVH(rightSide, n - n / 2);
     }
 
     AABB box_left, box_right;
-    if (!node.left.boundingBox(t0, t1, box_left) ||
-        !node.right.boundingBox(t0, t1, box_right)) {
+    if (!node.left.boundingBox(box_left) ||
+        !node.right.boundingBox(box_right)) {
       throw std::runtime_error("No bounding box found!");
     }
 
