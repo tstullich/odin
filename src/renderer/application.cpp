@@ -65,10 +65,10 @@ void odin::Application::cleanup() {
       deviceManager->getLogicalDevice(),
       *computeDescriptorSetLayout->getDescriptorSetLayout(), nullptr);
 
-  vkDestroyBuffer(deviceManager->getLogicalDevice(),
-                  triangleBuffer->getBuffer(), nullptr);
-  vkFreeMemory(deviceManager->getLogicalDevice(),
-               triangleBuffer->getBufferMemory(), nullptr);
+  vkDestroyBuffer(deviceManager->getLogicalDevice(), bvhBuffer->getBuffer(),
+                  nullptr);
+  vkFreeMemory(deviceManager->getLogicalDevice(), bvhBuffer->getBufferMemory(),
+               nullptr);
 
   for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     vkDestroySemaphore(deviceManager->getLogicalDevice(),
@@ -135,6 +135,11 @@ void odin::Application::createBvh() {
   std::cout << "Finished building BVH" << std::endl;
 }
 
+void odin::Application::createBvhBuffer() {
+  bvhBuffer =
+      std::make_unique<BvhBuffer>(*deviceManager, *commandPool, bvh.nodes);
+}
+
 void odin::Application::createCommandBuffers() {
   commandPool->createComputeCommandBuffers(
       deviceManager->getLogicalDevice(), *renderPass, *computePipeline,
@@ -165,7 +170,7 @@ void odin::Application::createDescriptorPool() {
   // Grab all of the needed descriptors for binding
   std::vector<VkDescriptorBufferInfo> bufferInfos;
   bufferInfos.push_back(computeUbo->getDescriptor());
-  bufferInfos.push_back(triangleBuffer->getDescriptor());
+  bufferInfos.push_back(bvhBuffer->getDescriptor());
 
   // This also creates the necessary VkDescriptorSets
   descriptorPool = std::make_unique<DescriptorPool>(
@@ -260,11 +265,6 @@ void odin::Application::createTextureImage() {
 
 void odin::Application::createTextureSampler() {
   textureSampler = std::make_unique<TextureSampler>(*deviceManager);
-}
-
-void odin::Application::createTriangleBuffer() {
-  triangleBuffer =
-      std::make_unique<TriangleBuffer>(*deviceManager, *commandPool, triangles);
 }
 
 void odin::Application::createUniformBuffers() {
@@ -394,7 +394,7 @@ void odin::Application::initVulkan() {
   createTextureImage();
   createGraphicsPipeline();
   createComputePipeline();
-  createTriangleBuffer();
+  createBvhBuffer();
   createDescriptorPool();
   createDepthResources();
   createFrameBuffers();

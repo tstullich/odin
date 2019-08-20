@@ -32,6 +32,7 @@
 #include "renderer/triangle.hpp"
 #include "renderer/ubo.hpp"
 #include "renderer/vertex.hpp"
+#include "vk/bvh_buffer.hpp"
 #include "vk/compute_pipeline.hpp"
 #include "vk/depth_image.hpp"
 #include "vk/descriptor_pool.hpp"
@@ -44,7 +45,6 @@
 #include "vk/swapchain.hpp"
 #include "vk/texture_image.hpp"
 #include "vk/texture_sampler.hpp"
-#include "vk/triangle_buffer.hpp"
 #include "vk/uniform_buffer.hpp"
 #include "vk/vertex_buffer.hpp"
 
@@ -87,6 +87,8 @@ private:
 
   void createBvh();
 
+  void createBvhBuffer();
+
   void createCommandBuffers();
 
   void createCommandPool();
@@ -118,8 +120,6 @@ private:
   void createTextureImage();
 
   void createTextureSampler();
-
-  void createTriangleBuffer();
 
   void createUniformBuffers();
 
@@ -163,9 +163,9 @@ private:
 
   bool framebufferResized = false;
 
-  BVH bvh;
   std::vector<Triangle> triangles;
-  std::unique_ptr<TriangleBuffer> triangleBuffer;
+  BVH bvh;
+  std::unique_ptr<BvhBuffer> bvhBuffer;
 
   std::unique_ptr<UniformBuffer> computeUbo;
 
