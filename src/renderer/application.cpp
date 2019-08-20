@@ -44,12 +44,6 @@ void odin::Application::keyCallback(GLFWwindow *window, int key, int scanCode,
   }
 }
 
-void odin::Application::buildBvh() {
-  std::cout << "Building BVH" << std::endl;
-  bvh.init(triangles);
-  std::cout << "Finished building BVH" << std::endl;
-}
-
 void odin::Application::cleanup() {
   cleanupSwapChain();
 
@@ -133,6 +127,12 @@ void odin::Application::cleanupSwapChain() {
 
   vkDestroyDescriptorPool(deviceManager->getLogicalDevice(),
                           descriptorPool->getDescriptorPool(), nullptr);
+}
+
+void odin::Application::createBvh() {
+  std::cout << "Building BVH" << std::endl;
+  bvh.init(triangles);
+  std::cout << "Finished building BVH" << std::endl;
 }
 
 void odin::Application::createCommandBuffers() {
@@ -385,6 +385,7 @@ void odin::Application::initVulkan() {
   createDeviceManager();
   createUniformBuffers();
   loadModel();
+  createBvh();
   createDescriptorSetLayouts();
   createSwapChain();
   createRenderPass();

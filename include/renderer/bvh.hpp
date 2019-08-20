@@ -20,16 +20,21 @@ struct BVH_Node {
 };
 
 struct BVH {
-  BVH_Node root;
+  std::vector<BVH_Node> nodes;
 
 public:
   void init(std::vector<Triangle> &triangles) {
-    root = buildBVH(triangles, triangles.size(), 0.0, 1.0);
+    if (triangles.size() == 0) {
+      throw std::runtime_error("No triangles available to build!");
+    }
+
+    buildBVH(triangles, triangles.size(), 0.0, 1.0);
+    // Reverse our vector so we have a proper ordering for the nodes
+    std::reverse(nodes.begin(), nodes.end());
   }
 
 private:
-  BVH_Node buildBVH(const std::vector<Triangle> &triangles, int n, float t0,
-                    float t1) {
+  void buildBVH(std::vector<Triangle> &triangles, int n, float t0, float t1) {
     // Setup random number generator
     std::random_device dev;
     std::mt19937 rng(dev());
@@ -58,12 +63,12 @@ private:
       node.right = triangles[1];
     } else {
       // Recursion to divide triangle list into two search spaces
-      node = buildBVH(triangles, n / 2, t0, t1);
+      buildBVH(triangles, n / 2, t0, t1);
 
       // Create an iterator for the second half of the triangles array
       auto first = triangles.begin() + (n / 2);
       std::vector<Triangle> rightSide(first, triangles.end());
-      node = buildBVH(rightSide, n - n / 2, t0, t1);
+      buildBVH(rightSide, n - n / 2, t0, t1);
     }
 
     AABB box_left, box_right;
@@ -72,8 +77,9 @@ private:
       throw std::runtime_error("No bounding box found!");
     }
 
+    // Place constructed node into vector
     node.box = AABB::surroundingBox(box_left, box_right);
-    return node;
+    nodes.push_back(node);
   }
 };
 } // namespace odin
