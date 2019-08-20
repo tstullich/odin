@@ -383,8 +383,8 @@ void odin::Application::initVulkan() {
   createInstance();
   createSurface();
   createDeviceManager();
-  loadModel();
   createUniformBuffers();
+  loadModel();
   createDescriptorSetLayouts();
   createSwapChain();
   createRenderPass();
@@ -488,7 +488,7 @@ int odin::Application::parseArguments(int argc, char *argv[]) {
   // Check if we have enabled demo mode
   if (vm.count("demo")) {
     std::cout << "Running in demo mode" << std::endl;
-    MODEL_PATH = "models/triangle.obj";
+    MODEL_PATH = "models/cube.obj";
     TEXTURE_PATH = "textures/texture.jpg";
     return 0;
   }
