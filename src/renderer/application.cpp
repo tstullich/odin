@@ -132,6 +132,20 @@ void odin::Application::cleanupSwapChain() {
 void odin::Application::createBvh() {
   std::cout << "Building BVH" << std::endl;
   bvh.init(triangles);
+  for (auto &n : bvh.nodes) {
+    std::cout << "Left Node" << std::endl;
+    std::cout << "V1: " << n.left.v0.x << ", " << n.left.v0.y << ", " << n.left.v0.z << std::endl;
+    std::cout << "V2: " << n.left.v1.x << ", " << n.left.v1.y << ", " << n.left.v1.z << std::endl;
+    std::cout << "V3: " << n.left.v2.x << ", " << n.left.v2.y << ", " << n.left.v2.z << std::endl;
+    std::cout << "Right Node" << std::endl;
+    std::cout << "V1: " << n.right.v0.x << ", " << n.right.v0.y << ", " << n.right.v0.z << std::endl;
+    std::cout << "V2: " << n.right.v1.x << ", " << n.right.v1.y << ", " << n.right.v1.z << std::endl;
+    std::cout << "V3: " << n.right.v2.x << ", " << n.right.v2.y << ", " << n.right.v2.z << std::endl;
+    std::cout << "AABB" << std::endl;
+    std::cout << "Min: " << n.box.min.x << ", " << n.box.min.y << ", " << n.box.min.z << std::endl;
+    std::cout << "Max: " << n.box.max.x << ", " << n.box.max.y << ", " << n.box.max.z << std::endl;
+    std::cout << std::endl;
+  }
   std::cout << "Finished building BVH" << std::endl;
 }
 
@@ -269,8 +283,8 @@ void odin::Application::createTextureSampler() {
 
 void odin::Application::createUniformBuffers() {
   // Initialize camera
-  glm::vec3 lookFrom(0.0f, 1.0f, 6.0f);
-  glm::vec3 lookAt(0.0f, 1.0f, -1.0f);
+  glm::vec3 lookFrom(0.0f, 0.0f, 6.0f);
+  glm::vec3 lookAt(0.0f, 0.0f, -1.0f);
   float distToFocus = glm::length(lookFrom - lookAt);
   float aperture = 2.0;
 
@@ -491,7 +505,7 @@ int odin::Application::parseArguments(int argc, char *argv[]) {
   // Check if we have enabled demo mode
   if (vm.count("demo")) {
     std::cout << "Running in demo mode" << std::endl;
-    MODEL_PATH = "models/cube.obj";
+    MODEL_PATH = "models/triangle.obj";
     TEXTURE_PATH = "textures/texture.jpg";
     return 0;
   }

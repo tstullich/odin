@@ -16,14 +16,13 @@ struct AABB {
 
   // Build a surrounding box from two AABBs
   static AABB surroundingBox(AABB box0, AABB box1) {
-    glm::vec3 small(ffmin(box0.min.x, box1.min.x),
-                    ffmin(box0.min.y, box1.min.y),
-                    ffmin(box0.min.z, box1.min.z));
+    glm::vec3 min(ffmin(box0.min.x, box1.min.x), ffmin(box0.min.y, box1.min.y),
+                  ffmin(box0.min.z, box1.min.z));
 
-    glm::vec3 big(ffmax(box0.max.x, box1.max.x), ffmax(box0.max.y, box1.max.y),
+    glm::vec3 max(ffmax(box0.max.x, box1.max.x), ffmax(box0.max.y, box1.max.y),
                   ffmax(box0.max.z, box1.max.z));
 
-    return AABB{small, big};
+    return AABB{min, max};
   }
 };
 } // namespace odin

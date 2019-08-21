@@ -25,7 +25,7 @@ struct Triangle {
     normal = glm::cross(u, v);
   };
 
-  bool boundingBox(AABB aabb) {
+  bool boundingBox(AABB &aabb) {
     box = surroundingBox(v0, v1, v2);
     aabb = box;
     return true;
@@ -34,13 +34,13 @@ struct Triangle {
   // Calculate the bounding box based on 3 vertices
   AABB surroundingBox(const glm::vec3 &a, const glm::vec3 &b,
                       const glm::vec3 &c) {
-    glm::vec3 small(ffmin(ffmin(a.x, b.x), c.x), ffmin(ffmin(a.y, b.y), c.y),
-                    ffmin(ffmin(a.z, b.z), c.z));
+    glm::vec3 min(ffmin(ffmin(a.x, b.x), c.x), ffmin(ffmin(a.y, b.y), c.y),
+                  ffmin(ffmin(a.z, b.z), c.z));
 
-    glm::vec3 big(ffmax(ffmax(a.x, b.x), c.x), ffmax(ffmax(a.y, b.y), c.y),
+    glm::vec3 max(ffmax(ffmax(a.x, b.x), c.x), ffmax(ffmax(a.y, b.y), c.y),
                   ffmax(ffmax(a.z, b.z), c.z));
 
-    return AABB{small, big};
+    return AABB{min, max};
   }
 };
 
