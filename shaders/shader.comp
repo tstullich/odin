@@ -12,7 +12,7 @@ precision mediump float;
 // Defining some constants
 // This will only work in GLSL 4.4 and above!
 const float INFINITY = 1.0 / 0.0;
-const float EPSILON = 0.001;
+const float EPSILON = 0.0001;
 const int NUM_BOUNCES = 4;
 const int NUM_SAMPLES = 16;
 
@@ -92,11 +92,11 @@ struct HitRecord {
 };
 
 // Struct representing a sphere
-struct Sphere {
-  vec3 center;
-  float radius;
-  Material mat;
-};
+//struct Sphere {
+//  vec3 center;
+//  float radius;
+//  Material mat;
+//};
 
 // Setup for ray creation
 struct Ray {
@@ -158,7 +158,37 @@ bool aabb_hit(in Ray ray, in AABB box, in float t_min, in float t_max) {
 
 bool triangle_hit(in Ray ray, in Triangle tri, in float t_min, in float t_max,
                   out HitRecord rec) {
-  // TODO Implement
+  vec3 edge0 = tri.v1 - tri.v0;
+  vec3 edge1 = tri.v2 - tri.v0;
+  vec3 h = cross(ray.direction, edge1);
+  float a = dot(edge0, h);
+  if (a > -t_min && a < t_min) {
+    // Ray parallel to triangle. No intersection
+    return false;
+  }
+
+  float f = 1.0 / a;
+  vec3 s = ray.origin - tri.v0;
+  float u = f * dot(s, h);
+  if (u < 0.0 || u > 1.0) {
+    return false;
+  }
+
+  vec3 q = cross(s, edge0);
+  float v = f * dot(ray.direction, q);
+  if (v < 0.0 || u + v > 1.0) {
+    return false;
+  }
+
+  float t = f * dot(edge1, q);
+  if (t > t_min) {
+    rec.t = t;
+    rec.p = ray_point_at_param(ray, rec.t);
+    rec.normal = tri.normal;
+    // For testing use a diffuse material, but swap later
+    rec.mat = Material(vec3(0.5, 0.5, 0.5), 0.0, 0.0, 1);
+    return true;
+  }
   return false;
 }
 
@@ -186,36 +216,36 @@ bool bvh_hit(in Ray ray, in BvhNode node, in float t_min, in float t_max,
   return false;
 }
 
-bool sphere_hit(in Ray ray, in Sphere sphere, in float t_min, in float t_max,
-                inout HitRecord rec) {
-  vec3 oc = vec3(ray.origin - sphere.center);
-  float a = dot(ray.direction, ray.direction);
-  float b = dot(oc, ray.direction);
-  float c = dot(oc, oc) - sphere.radius * sphere.radius;
-  float discriminant = b * b - a * c;
-
-  if (discriminant > 0.0) {
-    float sqrt_disc = sqrt(discriminant);
-    float temp = (-b - sqrt_disc) / a;
-    if (temp < t_max && temp > t_min) {
-      rec.t = temp;
-      rec.p = ray_point_at_param(ray, rec.t);
-      rec.normal = (rec.p - sphere.center) / sphere.radius;
-      rec.mat = sphere.mat;
-      return true;
-    }
-
-    temp = (-b + sqrt_disc) / a;
-    if (temp < t_max && temp > t_min) {
-      rec.t = temp;
-      rec.p = ray_point_at_param(ray, rec.t);
-      rec.normal = (rec.p - sphere.center) / sphere.radius;
-      rec.mat = sphere.mat;
-      return true;
-    }
-  }
-  return false;
-}
+//bool sphere_hit(in Ray ray, in Sphere sphere, in float t_min, in float t_max,
+//                inout HitRecord rec) {
+//  vec3 oc = vec3(ray.origin - sphere.center);
+//  float a = dot(ray.direction, ray.direction);
+//  float b = dot(oc, ray.direction);
+//  float c = dot(oc, oc) - sphere.radius * sphere.radius;
+//  float discriminant = b * b - a * c;
+//
+//  if (discriminant > 0.0) {
+//    float sqrt_disc = sqrt(discriminant);
+//    float temp = (-b - sqrt_disc) / a;
+//    if (temp < t_max && temp > t_min) {
+//      rec.t = temp;
+//      rec.p = ray_point_at_param(ray, rec.t);
+//      rec.normal = (rec.p - sphere.center) / sphere.radius;
+//      rec.mat = sphere.mat;
+//      return true;
+//    }
+//
+//    temp = (-b + sqrt_disc) / a;
+//    if (temp < t_max && temp > t_min) {
+//      rec.t = temp;
+//      rec.p = ray_point_at_param(ray, rec.t);
+//      rec.normal = (rec.p - sphere.center) / sphere.radius;
+//      rec.mat = sphere.mat;
+//      return true;
+//    }
+//  }
+//  return false;
+//}
 
 bool scatter_lambertian(in Ray ray, in HitRecord rec, inout vec3 attenuation,
                         inout Ray scattered) {
@@ -299,13 +329,13 @@ bool scatter(in Ray ray, inout HitRecord rec, inout vec3 attentuation,
   }
 }
 
-bool intersect(in Ray ray, in Sphere[4] spheres, in float t_min, in float t_max,
+bool intersect(in Ray ray, in float t_min, in float t_max,
                inout HitRecord rec) {
   HitRecord temp_rec;
   bool hit_anything = false;
   float closest_so_far = t_max;
-  for (int i = 0; i < spheres.length(); i++) {
-    if (sphere_hit(ray, spheres[i], t_min, closest_so_far, temp_rec)) {
+  for (int i = 0; i < nodes.length(); i++) {
+    if (bvh_hit(ray, nodes[i], t_min, closest_so_far, temp_rec)) {
       hit_anything = true;
       closest_so_far = temp_rec.t;
       rec = temp_rec;
@@ -314,12 +344,12 @@ bool intersect(in Ray ray, in Sphere[4] spheres, in float t_min, in float t_max,
   return hit_anything;
 }
 
-vec3 render(in Ray ray, in Sphere[4] spheres) {
+vec3 render(in Ray ray) {
   HitRecord rec;
   vec3 total_attenuation = vec3(1.0, 1.0, 1.0);
   // Iterate for a max number of bounces
   for (int i = 0; i < NUM_BOUNCES; i++) {
-    if (intersect(ray, spheres, EPSILON, INFINITY, rec)) {
+    if (intersect(ray, EPSILON, INFINITY, rec)) {
       // Intersected an object and need to bounce the ray
       Ray scattered;
       vec3 attenuation;
@@ -343,16 +373,10 @@ void main() {
   ivec2 dim = imageSize(resultImage);
 
   // Create materials
-  Material diff0 = Material(vec3(0.5, 0.5, 0.5), 0.0, 0.0, 1);
-  Material diff1 = Material(vec3(0.4, 0.2, 0.1), 0.0, 0.0, 1);
-  Material metal = Material(vec3(0.7, 0.6, 0.5), 0.0001, 0.0, 2);
-  Material dielectric = Material(vec3(0.0, 0.0, 0.0), 0.0001, 1.5, 3);
-
-  // Add some spheres
-  Sphere spheres[4] = Sphere[4](Sphere(vec3(0.0, -1000.0, 0.0), 1000.0, diff0),
-                                Sphere(vec3(0.0, 1.0, 0.0), 0.8, diff0),
-                                Sphere(vec3(-2.0, 1.0, 0.0), 0.8, diff1),
-                                Sphere(vec3(2.0, 1.0, 0.0), 0.8, metal));
+  //Material diff0 = Material(vec3(0.5, 0.5, 0.5), 0.0, 0.0, 1);
+  //Material diff1 = Material(vec3(0.4, 0.2, 0.1), 0.0, 0.0, 1);
+  //Material metal = Material(vec3(0.7, 0.6, 0.5), 0.0001, 0.0, 2);
+  //Material dielectric = Material(vec3(0.0, 0.0, 0.0), 0.0001, 1.5, 3);
 
   vec3 finalColor = vec3(0.0, 0.0, 0.0);
   // For loop to sample multiple times
@@ -362,7 +386,7 @@ void main() {
     float v =
         (gl_GlobalInvocationID.y + rand(gl_GlobalInvocationID.xy + s)) / dim.y;
     Ray r0 = get_ray(u, v);
-    finalColor += render(r0, spheres);
+    finalColor += render(r0);
   }
 
   // Normalize the color with the number of samples

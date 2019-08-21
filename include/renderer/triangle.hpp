@@ -22,7 +22,7 @@ struct Triangle {
   void calculateNormal() {
     glm::vec3 u = v1 - v0;
     glm::vec3 v = v2 - v0;
-    normal = glm::normalize(glm::cross(u, v));
+    normal = glm::cross(u, v);
   };
 
   bool boundingBox(AABB aabb) {
