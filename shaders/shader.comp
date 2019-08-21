@@ -12,7 +12,7 @@ precision mediump float;
 // Defining some constants
 // This will only work in GLSL 4.4 and above!
 const float INFINITY = 1.0 / 0.0;
-const float EPSILON = 0.0001;
+const float EPSILON = 0.000000001;
 const int NUM_BOUNCES = 4;
 const int NUM_SAMPLES = 16;
 
@@ -91,13 +91,6 @@ struct HitRecord {
   Material mat;
 };
 
-// Struct representing a sphere
-//struct Sphere {
-//  vec3 center;
-//  float radius;
-//  Material mat;
-//};
-
 // Setup for ray creation
 struct Ray {
   vec3 origin;
@@ -136,6 +129,62 @@ Ray get_ray(in float s, in float t) {
                                       t * cam.vertical - cam.origin - offset);
 }
 
+bool triangle_hit(in Ray ray, in Triangle tri, in float t_min, in float t_max,
+                  inout HitRecord rec) {
+  float area2 = length(tri.normal);
+
+  float NdotRayDirection = dot(tri.normal, ray.direction);
+  if (abs(NdotRayDirection) < EPSILON) {
+    // Plane is parallel to ray so no intersection
+    return false;
+  }
+
+  float d = dot(tri.normal, tri.v0);
+  float temp_t = (dot(tri.normal, ray.origin) + d) / NdotRayDirection;
+  if (temp_t < 0.0) {
+    // Ray is behind the triangle
+    return false;
+  }
+
+  vec3 p = ray_point_at_param(ray, temp_t);
+  vec3 edge0 = tri.v1 - tri.v0;
+  vec3 vp0 = p - tri.v0;
+  vec3 c = cross(edge0, vp0);
+  if (dot(tri.normal, c) < 0.0) {
+    // The point is on the right side
+    return false;
+  }
+
+  vec3 edge1 = tri.v2 - tri.v1;
+  vec3 vp1 = p - tri.v1;
+  c = cross(edge1, vp1);
+  if (dot(tri.normal, c) < 0.0) {
+    // The point is on the right side
+    return false;
+  }
+
+  vec3 edge2 = tri.v0 - tri.v2;
+  vec3 vp2 = p - tri.v2;
+  c = cross(edge2, vp2);
+  if (dot(tri.normal, c) < 0.0) {
+    // The point is on the right side
+    return false;
+  }
+
+  if (temp_t < t_min && temp_t > t_max) {
+    // Hit was outside of our bounds
+    return false;
+  }
+
+  // Triangle was hit return data
+  rec.t = temp_t;
+  rec.p = p;
+  rec.normal = tri.normal;
+  // Diffuse material for testing
+  rec.mat = Material(vec3(0.5, 0.5, 0.5), 0.0, 0.0, 1);
+  return true;
+}
+
 bool aabb_hit(in Ray ray, in AABB box, in float t_min, in float t_max) {
   // Iterate over each axis and see if an intersection occurs
   for (int a = 0; a < 3; a++) {
@@ -156,48 +205,12 @@ bool aabb_hit(in Ray ray, in AABB box, in float t_min, in float t_max) {
   return true;
 }
 
-bool triangle_hit(in Ray ray, in Triangle tri, in float t_min, in float t_max,
-                  out HitRecord rec) {
-  vec3 edge0 = tri.v1 - tri.v0;
-  vec3 edge1 = tri.v2 - tri.v0;
-  vec3 h = cross(ray.direction, edge1);
-  float a = dot(edge0, h);
-  if (a > -t_min && a < t_min) {
-    // Ray parallel to triangle. No intersection
-    return false;
-  }
-
-  float f = 1.0 / a;
-  vec3 s = ray.origin - tri.v0;
-  float u = f * dot(s, h);
-  if (u < 0.0 || u > 1.0) {
-    return false;
-  }
-
-  vec3 q = cross(s, edge0);
-  float v = f * dot(ray.direction, q);
-  if (v < 0.0 || u + v > 1.0) {
-    return false;
-  }
-
-  float t = f * dot(edge1, q);
-  if (t > t_min) {
-    rec.t = t;
-    rec.p = ray_point_at_param(ray, rec.t);
-    rec.normal = tri.normal;
-    // For testing use a diffuse material, but swap later
-    rec.mat = Material(vec3(0.5, 0.5, 0.5), 0.0, 0.0, 1);
-    return true;
-  }
-  return false;
-}
-
 bool bvh_hit(in Ray ray, in BvhNode node, in float t_min, in float t_max,
-             out HitRecord rec) {
+             inout HitRecord rec) {
   if (aabb_hit(ray, node.box, t_min, t_max)) {
     HitRecord left_rec, right_rec;
     bool hit_left = triangle_hit(ray, node.left, t_min, t_max, left_rec);
-    bool hit_right = triangle_hit(ray, node.right, t_min, t_max, left_rec);
+    bool hit_right = triangle_hit(ray, node.right, t_min, t_max, right_rec);
     if (hit_left && hit_right) {
       if (left_rec.t < right_rec.t) {
         rec = left_rec;
@@ -215,37 +228,6 @@ bool bvh_hit(in Ray ray, in BvhNode node, in float t_min, in float t_max,
   }
   return false;
 }
-
-//bool sphere_hit(in Ray ray, in Sphere sphere, in float t_min, in float t_max,
-//                inout HitRecord rec) {
-//  vec3 oc = vec3(ray.origin - sphere.center);
-//  float a = dot(ray.direction, ray.direction);
-//  float b = dot(oc, ray.direction);
-//  float c = dot(oc, oc) - sphere.radius * sphere.radius;
-//  float discriminant = b * b - a * c;
-//
-//  if (discriminant > 0.0) {
-//    float sqrt_disc = sqrt(discriminant);
-//    float temp = (-b - sqrt_disc) / a;
-//    if (temp < t_max && temp > t_min) {
-//      rec.t = temp;
-//      rec.p = ray_point_at_param(ray, rec.t);
-//      rec.normal = (rec.p - sphere.center) / sphere.radius;
-//      rec.mat = sphere.mat;
-//      return true;
-//    }
-//
-//    temp = (-b + sqrt_disc) / a;
-//    if (temp < t_max && temp > t_min) {
-//      rec.t = temp;
-//      rec.p = ray_point_at_param(ray, rec.t);
-//      rec.normal = (rec.p - sphere.center) / sphere.radius;
-//      rec.mat = sphere.mat;
-//      return true;
-//    }
-//  }
-//  return false;
-//}
 
 bool scatter_lambertian(in Ray ray, in HitRecord rec, inout vec3 attenuation,
                         inout Ray scattered) {
@@ -373,26 +355,25 @@ void main() {
   ivec2 dim = imageSize(resultImage);
 
   // Create materials
-  //Material diff0 = Material(vec3(0.5, 0.5, 0.5), 0.0, 0.0, 1);
-  //Material diff1 = Material(vec3(0.4, 0.2, 0.1), 0.0, 0.0, 1);
-  //Material metal = Material(vec3(0.7, 0.6, 0.5), 0.0001, 0.0, 2);
-  //Material dielectric = Material(vec3(0.0, 0.0, 0.0), 0.0001, 1.5, 3);
+  // Material diff0 = Material(vec3(0.5, 0.5, 0.5), 0.0, 0.0, 1);
+  // Material diff1 = Material(vec3(0.4, 0.2, 0.1), 0.0, 0.0, 1);
+  // Material metal = Material(vec3(0.7, 0.6, 0.5), 0.0001, 0.0, 2);
+  // Material dielectric = Material(vec3(0.0, 0.0, 0.0), 0.0001, 1.5, 3);
 
-  vec3 finalColor = vec3(0.0, 0.0, 0.0);
-  // For loop to sample multiple times
-  for (int s = 0; s < NUM_SAMPLES; s++) {
-    float u =
-        (gl_GlobalInvocationID.x + rand(gl_GlobalInvocationID.xy + s)) / dim.x;
-    float v =
-        (gl_GlobalInvocationID.y + rand(gl_GlobalInvocationID.xy + s)) / dim.y;
-    Ray r0 = get_ray(u, v);
-    finalColor += render(r0);
-  }
+  vec3 finalColor = nodes[0].left.v1;
+  //// For loop to sample multiple times
+  //for (int s = 0; s < NUM_SAMPLES; s++) {
+  //  float u =
+  //      (gl_GlobalInvocationID.x + rand(gl_GlobalInvocationID.xy + s)) / dim.x;
+  //  float v =
+  //      (gl_GlobalInvocationID.y + rand(gl_GlobalInvocationID.xy + s)) / dim.y;
+  //  finalColor += render(get_ray(u, v));
+  //}
 
-  // Normalize the color with the number of samples
-  finalColor /= NUM_SAMPLES;
-  // Simple gamma-correction at 1/2
-  finalColor = sqrt(finalColor.xyz);
+  //// Normalize the color with the number of samples
+  //finalColor /= NUM_SAMPLES;
+  //// Simple gamma-correction at 1/2
+  //finalColor = sqrt(finalColor.xyz);
 
   imageStore(resultImage, ivec2(gl_GlobalInvocationID.xy),
              vec4(finalColor, 0.0));
