@@ -58,6 +58,7 @@ struct Triangle {
   vec3 v1;
   vec3 v2;
   vec3 normal;
+  AABB box;
 };
 
 struct BvhNode {
@@ -72,7 +73,7 @@ layout(std140, binding = 2) buffer BVH { BvhNode nodes[]; };
 // is IDed through a simple integer. The mapping is as follows:
 // * 1 - Diffuse
 // * 2 - Metal
-// * 3 - Glass
+// * 3 - Dielectric (glass, etc.)
 const int LAMBERTIAN = 1;
 const int METAL = 2;
 const int DIELECTRIC = 3;
