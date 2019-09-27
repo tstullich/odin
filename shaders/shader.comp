@@ -132,57 +132,37 @@ Ray get_ray(in float s, in float t) {
 
 bool triangle_hit(in Ray ray, in Triangle tri, in float t_min, in float t_max,
                   inout HitRecord rec) {
-  float area2 = length(tri.normal);
-
-  float NdotRayDirection = dot(tri.normal, ray.direction);
-  if (abs(NdotRayDirection) < EPSILON) {
-    // Plane is parallel to ray so no intersection
+  vec3 v0v1 = tri.v1 - tri.v0;
+  vec3 v0v2 = tri.v2 - tri.v0;
+  vec3 pvec = cross(ray.direction, v0v2);
+  float d = dot(v0v1, pvec);
+  if (abs(d) < EPSILON) {
+    // Plane is parallel to ray. No intersection
     return false;
   }
 
-  float d = dot(tri.normal, tri.v0);
-  float temp_t = (dot(tri.normal, ray.origin) + d) / NdotRayDirection;
-  if (temp_t < 0.0) {
-    // Ray is behind the triangle
+  float invD = 1.0 / d;
+  vec3 tvec = ray.origin - tri.v0;
+  float u = dot(tvec, pvec) * invD;
+  if (u < 0.0 || u > 1.0) {
+    // Ray missed the plane
     return false;
   }
 
-  vec3 p = ray_point_at_param(ray, temp_t);
-  vec3 edge0 = tri.v1 - tri.v0;
-  vec3 vp0 = p - tri.v0;
-  vec3 c = cross(edge0, vp0);
-  if (dot(tri.normal, c) < 0.0) {
-    // The point is on the right side
-    return false;
-  }
-
-  vec3 edge1 = tri.v2 - tri.v1;
-  vec3 vp1 = p - tri.v1;
-  c = cross(edge1, vp1);
-  if (dot(tri.normal, c) < 0.0) {
-    // The point is on the right side
-    return false;
-  }
-
-  vec3 edge2 = tri.v0 - tri.v2;
-  vec3 vp2 = p - tri.v2;
-  c = cross(edge2, vp2);
-  if (dot(tri.normal, c) < 0.0) {
-    // The point is on the right side
-    return false;
-  }
-
-  if (temp_t < t_min && temp_t > t_max) {
-    // Hit was outside of our bounds
+  vec3 qvec = cross(tvec, v0v1);
+  float v = dot(ray.direction, qvec) * invD;
+  if (v < 0 || u + v > 1.0) {
+    // Ray missed the plane
     return false;
   }
 
   // Triangle was hit return data
+  float temp_t = dot(v0v2, qvec) * invD;
   rec.t = temp_t;
-  rec.p = p;
+  rec.p = ray_point_at_param(ray, rec.t);
   rec.normal = tri.normal;
   // Diffuse material for testing
-  rec.mat = Material(vec3(0.5, 0.5, 0.5), 0.0, 0.0, 1);
+  rec.mat = Material(vec3(0.5, 0.0, 0.0), 0.0, 0.0, 1);
   return true;
 }
 
@@ -191,7 +171,7 @@ bool aabb_hit(in Ray ray, in AABB box, in float t_min, in float t_max) {
   for (int a = 0; a < 3; a++) {
     float invD = 1.0 / ray.direction[a];
     float t0 = (box.min[a] - ray.origin[a]) * invD;
-    float t1 = (box.min[a] - ray.origin[a]) * invD;
+    float t1 = (box.max[a] - ray.origin[a]) * invD;
     if (invD < 0.0) {
       float temp = t0;
       t0 = t1;
@@ -361,20 +341,20 @@ void main() {
   // Material metal = Material(vec3(0.7, 0.6, 0.5), 0.0001, 0.0, 2);
   // Material dielectric = Material(vec3(0.0, 0.0, 0.0), 0.0001, 1.5, 3);
 
-  vec3 finalColor = nodes[0].left.v1;
-  //// For loop to sample multiple times
-  //for (int s = 0; s < NUM_SAMPLES; s++) {
-  //  float u =
-  //      (gl_GlobalInvocationID.x + rand(gl_GlobalInvocationID.xy + s)) / dim.x;
-  //  float v =
-  //      (gl_GlobalInvocationID.y + rand(gl_GlobalInvocationID.xy + s)) / dim.y;
-  //  finalColor += render(get_ray(u, v));
-  //}
+  vec3 finalColor = vec3(0.0, 0.0, 0.0);
+  // For loop to sample multiple times
+  for (int s = 0; s < NUM_SAMPLES; s++) {
+    float u =
+        (gl_GlobalInvocationID.x + rand(gl_GlobalInvocationID.xy + s)) / dim.x;
+    float v =
+        (gl_GlobalInvocationID.y + rand(gl_GlobalInvocationID.xy + s)) / dim.y;
+    finalColor += render(get_ray(u, v));
+  }
 
-  //// Normalize the color with the number of samples
-  //finalColor /= NUM_SAMPLES;
-  //// Simple gamma-correction at 1/2
-  //finalColor = sqrt(finalColor.xyz);
+  // Normalize the color with the number of samples
+  finalColor /= NUM_SAMPLES;
+  // Simple gamma-correction at 1/2
+  finalColor = sqrt(finalColor.xyz);
 
   imageStore(resultImage, ivec2(gl_GlobalInvocationID.xy),
              vec4(finalColor, 0.0));
