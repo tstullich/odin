@@ -427,9 +427,9 @@ void odin::Application::loadModel() {
     throw std::runtime_error(warn + err);
   }
 
-  // For efficiency we only want unique vertices
-  std::unordered_map<Vertex, uint32_t> uniqueVertices = {};
   for (auto const &shape : shapes) {
+    std::cout << "Processing " << shape.name << ". "
+              << "Faces: " << shape.mesh.num_face_vertices.size() << std::endl;
     size_t indexOffset = 0;
     for (auto const &faceIdx : shape.mesh.num_face_vertices) {
       Triangle triangle = {};
@@ -453,7 +453,8 @@ void odin::Application::loadModel() {
       indexOffset += faceIdx;
     }
   }
-  std::cout << "Finished loading models" << std::endl;
+  std::cout << "Finished loading models. Faces: " << triangles.size()
+            << std::endl;
 }
 
 void odin::Application::mainLoop() {
