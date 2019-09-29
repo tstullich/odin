@@ -186,7 +186,7 @@ bool aabb_hit(in Ray ray, in AABB box, in float t_min, in float t_max) {
   return true;
 }
 
-bool bvh_hit(in Ray ray, in BvhNode node, in float t_min, in float t_max,
+bool bvh_hit(in Ray ray, inout BvhNode node, in float t_min, in float t_max,
              inout HitRecord rec) {
   if (aabb_hit(ray, node.box, t_min, t_max)) {
     HitRecord left_rec, right_rec;
@@ -195,15 +195,19 @@ bool bvh_hit(in Ray ray, in BvhNode node, in float t_min, in float t_max,
     if (hit_left && hit_right) {
       if (left_rec.t < right_rec.t) {
         rec = left_rec;
+        node = node.left.box;
       } else {
         rec = right_rec;
+        node = node.right.box;
       }
       return true;
     } else if (hit_left) {
       rec = left_rec;
+      node = node.right.box;
       return true;
     } else if (hit_right) {
       rec = right_rec;
+      node = node.right.box;
       return true;
     }
   }
@@ -301,30 +305,31 @@ bool intersect(in Ray ray, in float t_min, in float t_max,
   // TODO Optimize for loop here
   while (bvh_hit && !root.is_leaf) {
     bvh_hit = bvh_hit(ray, nodes[i], t_min, closest_so_far, temp_rec);
-      if (bvh_hit && root.is_leaf) {
-        // Hit BVH and arrived at exit statement
-        hit_anything = true;
+      if (root.is_leaf) {
+        // Terminate since we are at the leaf node
         closest_so_far = temp_rec.t;
         rec = temp_rec;
         return true;
       }
 
       if (bvh_hit) {
-        // We are still in the BVH and need to retrieve the next node
+        // Need to determine which way to traverse
+        closest_so_far = temp_rec.t;
+        rec = temp_rec;
       }
     }
   }
   // Did not hit the BVH so no intersection was made
   return false;
 
-  for (int i = 0; i < nodes.length(); i++) {
-    if (bvh_hit(ray, nodes[i], t_min, closest_so_far, temp_rec)) {
-      hit_anything = true;
-      closest_so_far = temp_rec.t;
-      rec = temp_rec;
-    }
-  }
-  return hit_anything;
+  //for (int i = 0; i < nodes.length(); i++) {
+  //  if (bvh_hit(ray, nodes[i], t_min, closest_so_far, temp_rec)) {
+  //    hit_anything = true;
+  //    closest_so_far = temp_rec.t;
+  //    rec = temp_rec;
+  //  }
+  //}
+  //return hit_anything;
 }
 
 vec3 render(in Ray ray) {
