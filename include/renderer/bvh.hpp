@@ -18,6 +18,7 @@ struct BvhNode {
   Triangle left;
   Triangle right;
   AABB box;
+  alignas(16) bool is_leaf = false;
 };
 
 // A struct encapsulating data for a Bounding Volume Hierarchy.
@@ -61,9 +62,11 @@ private:
     if (n == 1) {
       // If we only have 1 element we copy it into both leaves
       node.left = node.right = triangles[0];
+      node.is_leaf = true;
     } else if (n == 2) {
       node.left = triangles[0];
       node.right = triangles[1];
+      node.is_leaf = true;
     } else {
       // Recursion to divide triangle list into two search spaces
       buildBVH(triangles, n / 2);
@@ -82,6 +85,7 @@ private:
 
     // Place constructed node into vector
     node.box = AABB::surroundingBox(box_left, box_right);
+    std::cout << "Size of BVH node: " << sizeof(node) << std::endl;
     nodes.push_back(node);
   }
 };
