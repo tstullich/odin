@@ -13,7 +13,7 @@ precision mediump float;
 // This will only work in GLSL 4.4 and above!
 const float INFINITY = 1.0 / 0.0;
 const float EPSILON = 0.000000001;
-const int NUM_BOUNCES = 4;
+const int NUM_BOUNCES = 3;
 const int NUM_SAMPLES = 16;
 
 // Function for generating pseudo-random numbers
@@ -66,7 +66,6 @@ struct BvhNode {
   Triangle left;
   Triangle right;
   AABB box;
-  bool is_leaf;
 };
 
 layout(std140, binding = 2) buffer BVH { BvhNode nodes[]; };
@@ -162,28 +161,23 @@ bool triangle_hit(in Ray ray, in Triangle tri, in float t_min, in float t_max,
   rec.p = ray_point_at_param(ray, rec.t);
   rec.normal = tri.normal;
   // Diffuse material for testing
-  rec.mat = Material(vec3(0.5, 0.5, 0.0), 0.0, 0.0, 1);
+  rec.mat = Material(vec3(0.8, 0.0, 0.0), 0.0, 0.0, 1);
   return true;
 }
 
 bool aabb_hit(in Ray ray, in AABB box, in float t_min, in float t_max) {
-  // Iterate over each axis and see if an intersection occurs
-  for (int a = 0; a < 3; a++) {
-    float invD = 1.0 / ray.direction[a];
-    float t0 = (box.min[a] - ray.origin[a]) * invD;
-    float t1 = (box.max[a] - ray.origin[a]) * invD;
-    if (invD < 0.0) {
-      float temp = t0;
-      t0 = t1;
-      t1 = temp;
-    }
-    t_min = t0 > t_min ? t0 : t_min;
-    t_max = t1 < t_max ? t1 : t_max;
-    if (t_max <= t_min) {
-      return false;
-    }
-  }
-  return true;
+  // Optimized AABB hit intersection test
+  vec3 invD = vec3(1.0) / ray.direction;
+  vec3 t0s = (box.min - ray.origin) * invD;
+  vec3 t1s = (box.max - ray.origin) * invD;
+
+  vec3 t_smaller = min(t0s, t1s);
+  vec3 t_bigger = max(t0s, t1s);
+
+  t_min = max(t_min, max(t_smaller[0], max(t_smaller[1], t_smaller[2])));
+  t_max = min(t_max, min(t_bigger[0], min(t_bigger[1], t_bigger[2])));
+
+  return t_min <= t_max;
 }
 
 bool bvh_hit(in Ray ray, inout BvhNode node, in float t_min, in float t_max,
@@ -195,19 +189,15 @@ bool bvh_hit(in Ray ray, inout BvhNode node, in float t_min, in float t_max,
     if (hit_left && hit_right) {
       if (left_rec.t < right_rec.t) {
         rec = left_rec;
-        node = node.left.box;
       } else {
         rec = right_rec;
-        node = node.right.box;
       }
       return true;
     } else if (hit_left) {
       rec = left_rec;
-      node = node.right.box;
       return true;
     } else if (hit_right) {
       rec = right_rec;
-      node = node.right.box;
       return true;
     }
   }
@@ -299,44 +289,27 @@ bool scatter(in Ray ray, inout HitRecord rec, inout vec3 attentuation,
 bool intersect(in Ray ray, in float t_min, in float t_max,
                inout HitRecord rec) {
   HitRecord temp_rec;
-  bool bvh_hit = true;
+  bool hit_anything = false;
   float closest_so_far = t_max;
-  Node root = nodes[0];
-  // TODO Optimize for loop here
-  while (bvh_hit && !root.is_leaf) {
-    bvh_hit = bvh_hit(ray, nodes[i], t_min, closest_so_far, temp_rec);
-      if (root.is_leaf) {
-        // Terminate since we are at the leaf node
-        closest_so_far = temp_rec.t;
-        rec = temp_rec;
-        return true;
-      }
-
-      if (bvh_hit) {
-        // Need to determine which way to traverse
-        closest_so_far = temp_rec.t;
-        rec = temp_rec;
-      }
+  for (uint i = 0; i < nodes.length(); ++i) {
+    if (bvh_hit(ray, nodes[i], t_min, closest_so_far, temp_rec)) {
+      hit_anything = true;
+      closest_so_far = temp_rec.t;
+      rec = temp_rec;
     }
+    //} else if (!hit_anything) {
+    //  // If we did not the BVH at all get an early out
+    //  return false;
+    //}
   }
-  // Did not hit the BVH so no intersection was made
-  return false;
-
-  //for (int i = 0; i < nodes.length(); i++) {
-  //  if (bvh_hit(ray, nodes[i], t_min, closest_so_far, temp_rec)) {
-  //    hit_anything = true;
-  //    closest_so_far = temp_rec.t;
-  //    rec = temp_rec;
-  //  }
-  //}
-  //return hit_anything;
+  return hit_anything;
 }
 
 vec3 render(in Ray ray) {
   HitRecord rec;
   vec3 total_attenuation = vec3(1.0, 1.0, 1.0);
   // Iterate for a max number of bounces
-  for (int i = 0; i < NUM_BOUNCES; i++) {
+  for (uint i = 0; i < NUM_BOUNCES; ++i) {
     if (intersect(ray, EPSILON, INFINITY, rec)) {
       // Intersected an object and need to bounce the ray
       Ray scattered;
@@ -360,11 +333,7 @@ vec3 render(in Ray ray) {
 void main() {
   ivec2 dim = imageSize(resultImage);
   vec3 finalColor = vec3(0.0, 0.0, 0.0);
-  //if (nodes[3].is_leaf) {
-  //  finalColor = nodes[3].left.v2;
-  //}
-  // For loop to sample multiple times
-  for (int s = 0; s < NUM_SAMPLES; s++) {
+  for (uint s = 0; s < NUM_SAMPLES; ++s) {
     float u =
         (gl_GlobalInvocationID.x + rand(gl_GlobalInvocationID.xy + s)) / dim.x;
     float v =
