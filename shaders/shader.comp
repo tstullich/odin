@@ -171,7 +171,7 @@ bool aabb_hit(in Ray ray, in AABB box, in float t_min, in float t_max) {
   vec3 t0s = (box.min - ray.origin) * invD;
   vec3 t1s = (box.max - ray.origin) * invD;
 
-  vec3 t_smaller = min(t0s, t1s);
+  vec3 t_smaller = min(t1s, t0s);
   vec3 t_bigger = max(t0s, t1s);
 
   t_min = max(t_min, max(t_smaller[0], max(t_smaller[1], t_smaller[2])));
@@ -297,10 +297,10 @@ bool intersect(in Ray ray, in float t_min, in float t_max,
       closest_so_far = temp_rec.t;
       rec = temp_rec;
     }
-    //} else if (!hit_anything) {
-    //  // If we did not the BVH at all get an early out
-    //  return false;
-    //}
+    } else if (!hit_anything) {
+      // If we did not the BVH at all get an early out
+      return false;
+    }
   }
   return hit_anything;
 }
