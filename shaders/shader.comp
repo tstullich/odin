@@ -296,7 +296,6 @@ bool intersect(in Ray ray, in float t_min, in float t_max,
       hit_anything = true;
       closest_so_far = temp_rec.t;
       rec = temp_rec;
-    }
     } else if (!hit_anything) {
       // If we did not the BVH at all get an early out
       return false;
