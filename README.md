@@ -22,7 +22,7 @@ Odin should then be installed in the `bin` directory. Type `odin --help` for mor
 
 ## TODOs
 Below is an unordered list of planned features and improvements for Odin
-1. Rewrite BVH construction and traversal logic to use [SAH](https://www.researchgate.net/publication/232652917_On_Building_Fast_kd-trees_for_Ray_Tracing_and_on_Doing_that_in_ON_log_N)
+1. Rewrite BVH construction and traversal logic to use [SAH k-d tree](https://www.researchgate.net/publication/232652917_On_Building_Fast_kd-trees_for_Ray_Tracing_and_on_Doing_that_in_ON_log_N)
 2. Implement Multiple Importance Sampling
 3. Improve the compute and graphics pipelines to do batched rendering
 4. Update the camera model to use a view matrix
