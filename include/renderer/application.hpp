@@ -5,19 +5,18 @@
 #include <GLFW/glfw3.h>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <algorithm>
+#include <array>
 #include <boost/program_options/option.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/value_semantic.hpp>
 #include <boost/program_options/variables_map.hpp>
+#include <chrono>
+#include <cstdlib>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/hash.hpp>
-
-#include <algorithm>
-#include <array>
-#include <chrono>
-#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -60,7 +59,7 @@ namespace odin {
 namespace po = boost::program_options;
 
 class Application {
-public:
+ public:
   Application(int argc, char *argv[]);
 
   void run();
@@ -74,7 +73,7 @@ public:
   static const int HEIGHT = 600;
   static Camera camera;
 
-private:
+ private:
   static void framebufferResizeCallback(GLFWwindow *window, int width,
                                         int height);
 
@@ -82,6 +81,8 @@ private:
                           int mods);
 
   void cleanup();
+
+  void cleanupComputePipeline();
 
   void cleanupSwapChain();
 
@@ -183,5 +184,5 @@ private:
 
   const int MAX_FRAMES_IN_FLIGHT = 2;
 };
-} // namespace odin
-#endif // ODIN_APPLICATION_HPP
+}  // namespace odin
+#endif  // ODIN_APPLICATION_HPP

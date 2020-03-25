@@ -48,6 +48,8 @@ void odin::Application::keyCallback(GLFWwindow *window, int key, int scanCode,
 void odin::Application::cleanup() {
   cleanupSwapChain();
 
+  cleanupComputePipeline();
+
   vkDestroySampler(deviceManager->getLogicalDevice(),
                    textureSampler->getSampler(), nullptr);
   vkDestroyImageView(deviceManager->getLogicalDevice(),
@@ -93,6 +95,17 @@ void odin::Application::cleanup() {
   glfwDestroyWindow(window);
 
   glfwTerminate();
+}
+
+void odin::Application::cleanupComputePipeline() {
+  // Destroy compute fence
+  vkDestroyFence(deviceManager->getLogicalDevice(), computeFence, nullptr);
+
+  vkDestroyPipelineLayout(deviceManager->getLogicalDevice(),
+                          computePipeline->getPipelineLayout(), nullptr);
+
+  vkDestroyPipeline(deviceManager->getLogicalDevice(),
+                    computePipeline->getComputePipeline(), nullptr);
 }
 
 void odin::Application::cleanupSwapChain() {
@@ -407,6 +420,7 @@ void odin::Application::initWindow() {
   glfwInit();
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+  // TODO Make window resizable
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
   window = glfwCreateWindow(WIDTH, HEIGHT, "Odin", nullptr, nullptr);
