@@ -6,11 +6,6 @@ odin::RenderPass::RenderPass(const VkDevice& logicalDevice,
   createRenderPass(logicalDevice, imageFormat, depthFormat);
 }
 
-odin::RenderPass::~RenderPass() {
-  // TODO Implement
-  std::cout << "IMPLEMENT RENDER PASS DESTRUCTOR!" << std::endl;
-}
-
 void odin::RenderPass::createRenderPass(const VkDevice& logicalDevice,
                                         const VkFormat& imageFormat,
                                         const VkFormat& depthFormat) {

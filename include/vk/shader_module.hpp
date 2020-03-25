@@ -12,6 +12,7 @@ class ShaderModule {
  public:
   ShaderModule(const VkDevice& logicalDevice,
                const std::vector<char>& shaderCode);
+
   ~ShaderModule();
 
   const VkShaderModule getShaderModule() const;

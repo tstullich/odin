@@ -1,5 +1,6 @@
-#include "renderer/ubo.hpp"
 #include "vk/descriptor_pool.hpp"
+
+#include "renderer/ubo.hpp"
 #include "vk/texture_image.hpp"
 
 odin::DescriptorPool::DescriptorPool(
@@ -13,10 +14,6 @@ odin::DescriptorPool::DescriptorPool(
                               swapChain, textureImage, bufferInfos);
   createGraphicsDescriptorSets(deviceManager, graphicsDescriptorSetLayout,
                                textureImage, textureSampler);
-}
-
-odin::DescriptorPool::~DescriptorPool() {
-  std::cout << "IMPLEMENT DESCRIPTOR POOL DESTRUCTOR!" << std::endl;
 }
 
 const VkDescriptorPool odin::DescriptorPool::getDescriptorPool() const {

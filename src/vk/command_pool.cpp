@@ -1,4 +1,5 @@
 #include "vk/command_pool.hpp"
+
 #include "vk/compute_pipeline.hpp"
 #include "vk/descriptor_pool.hpp"
 #include "vk/graphics_pipeline.hpp"
@@ -23,10 +24,6 @@ odin::CommandPool::CommandPool(
                           &graphicsCommandPool) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create graphics command pool!");
   }
-}
-
-odin::CommandPool::~CommandPool() {
-  std::cout << "IMPLEMENT COMMAND POOL DESTRUCTOR!" << std::endl;
 }
 
 const VkCommandBuffer odin::CommandPool::beginSingleTimeCommands(

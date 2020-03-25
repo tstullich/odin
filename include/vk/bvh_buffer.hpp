@@ -16,11 +16,9 @@ namespace odin {
 class CommandPool;
 
 class BvhBuffer : public Buffer {
-public:
+ public:
   BvhBuffer(const DeviceManager &deviceManager, const CommandPool &commandPool,
             const std::vector<BvhNode> &nodes);
-
-  ~BvhBuffer();
 
   const VkBuffer getBuffer() const;
 
@@ -30,9 +28,9 @@ public:
 
   const size_t getNodeCount() const;
 
-private:
+ private:
   VkDeviceMemory bvhBufferMemory;
   size_t numNodes;
 };
-} // namespace odin
-#endif // ODIN_BVH_BUFFER_HPP
+}  // namespace odin
+#endif  // ODIN_BVH_BUFFER_HPP

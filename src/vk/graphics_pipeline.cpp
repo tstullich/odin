@@ -10,10 +10,6 @@ odin::GraphicsPipeline::GraphicsPipeline(
                  vertexShaderPath, fragmentShaderPath);
 }
 
-odin::GraphicsPipeline::~GraphicsPipeline() {
-  std::cout << "IMPLEMENT PIPELINE DESTRUCTOR!" << std::endl;
-}
-
 void odin::GraphicsPipeline::createPipeline(
     const VkDevice& logicalDevice, const Swapchain& swapChain,
     const RenderPass& renderPass,
@@ -21,10 +17,8 @@ void odin::GraphicsPipeline::createPipeline(
     const std::string& vertexShaderPath,
     const std::string& fragmentShaderPath) {
   // Load shaders from file
-  auto vertShaderCode =
-      FileReader::readFile(vertexShaderPath);
-  auto fragShaderCode =
-      FileReader::readFile(fragmentShaderPath);
+  auto vertShaderCode = FileReader::readFile(vertexShaderPath);
+  auto fragShaderCode = FileReader::readFile(fragmentShaderPath);
 
   // Create shader module wrappers
   ShaderModule vertShaderModule(logicalDevice, vertShaderCode);
@@ -50,8 +44,8 @@ void odin::GraphicsPipeline::createPipeline(
                                                     fragShaderStageInfo};
 
   // Get vertex binding and attribute descriptions for shaders
-  //auto bindingDescription = odin::Vertex::getBindingDescription();
-  //auto attributeDescriptions = odin::Vertex::getAttributeDescriptions();
+  // auto bindingDescription = odin::Vertex::getBindingDescription();
+  // auto attributeDescriptions = odin::Vertex::getAttributeDescriptions();
 
   // Configure how vertices are treated in the pipeline
   // Here we simply want an empty input since the actual vertices are

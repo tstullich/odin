@@ -26,8 +26,6 @@ class CommandPool {
   CommandPool(const VkDevice& logicalDevice,
               const odin::QueueFamilyIndices& queueFamilyIndices);
 
-  ~CommandPool();
-
   const VkCommandBuffer beginSingleTimeCommands(
       const VkDevice& logicalDevice) const;
 

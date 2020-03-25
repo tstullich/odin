@@ -13,7 +13,6 @@ class RenderPass {
  public:
   RenderPass(const VkDevice& logicalDevice, const VkFormat& imageFormat,
              const VkFormat& depthFormat);
-  ~RenderPass();
 
   const VkRenderPass getRenderPass() const;
 

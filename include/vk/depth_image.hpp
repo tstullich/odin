@@ -21,8 +21,6 @@ class DepthImage : Image {
   DepthImage(const DeviceManager& deviceManager, const CommandPool& commandPool,
              const Swapchain& swapChain);
 
-  ~DepthImage();
-
   const VkDeviceMemory getDeviceMemory() const;
 
   const VkImage getImage() const;

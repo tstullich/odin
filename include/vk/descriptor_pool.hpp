@@ -28,8 +28,6 @@ class DescriptorPool {
                  const TextureSampler& textureSampler,
                  const std::vector<VkDescriptorBufferInfo>& bufferInfos);
 
-  ~DescriptorPool();
-
   const VkDescriptorPool getDescriptorPool() const;
 
   const VkDescriptorSet* getComputeDescriptorSet() const;

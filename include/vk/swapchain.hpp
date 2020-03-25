@@ -19,8 +19,6 @@ class Swapchain {
             const VkDevice& logicalDevice, const VkSurfaceKHR& surface,
             GLFWwindow* window);
 
-  ~Swapchain();
-
   void cleanup();
 
   VkImageView createImageView(const VkDevice& logicalDevice,

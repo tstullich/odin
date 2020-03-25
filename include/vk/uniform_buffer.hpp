@@ -15,8 +15,6 @@ class UniformBuffer : public Buffer {
   UniformBuffer(const DeviceManager& deviceManager,
                 const VkDeviceSize bufferSize);
 
-  ~UniformBuffer();
-
   const VkBuffer getBuffer() const;
 
   const VkDescriptorBufferInfo getDescriptor() const;

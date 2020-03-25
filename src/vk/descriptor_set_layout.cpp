@@ -9,10 +9,6 @@ odin::DescriptorSetLayout::DescriptorSetLayout(
   }
 }
 
-odin::DescriptorSetLayout::~DescriptorSetLayout() {
-  std::cout << "IMPLEMENT DESCRIPTOR SET LAYOUT DESTRUCTOR!" << std::endl;
-}
-
 void odin::DescriptorSetLayout::createComputeDescriptorSetLayout(
     const DeviceManager& deviceManager) {
   // Binding for the raytraced output

@@ -20,8 +20,6 @@ class ComputePipeline {
                   const DescriptorSetLayout& descriptorSetLayout,
                   const std::string& computeShaderPath);
 
-  ~ComputePipeline();
-
   const VkPipeline getComputePipeline() const;
 
   const VkPipelineLayout getPipelineLayout() const;

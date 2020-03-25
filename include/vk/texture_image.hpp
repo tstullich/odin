@@ -23,8 +23,6 @@ class TextureImage : Image {
                const TextureSampler& textureSampler, uint32_t width,
                uint32_t height);
 
-  ~TextureImage();
-
   const VkDescriptorImageInfo* getDescriptor() const;
 
   const uint32_t getHeight() const;

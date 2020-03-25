@@ -22,8 +22,6 @@ class GraphicsPipeline {
                    const std::string& vertexShaderPath,
                    const std::string& fragmentShaderPath);
 
-  ~GraphicsPipeline();
-
   const VkPipeline getGraphicsPipeline() const;
 
   const VkPipelineLayout getPipelineLayout() const;

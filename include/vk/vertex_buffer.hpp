@@ -26,8 +26,6 @@ class VertexBuffer : public Buffer {
                const CommandPool& commandPool,
                const std::vector<Vertex>& vertices);
 
-  ~VertexBuffer();
-
   const VkBuffer getBuffer() const;
 
   const VkDeviceMemory getBufferMemory() const;

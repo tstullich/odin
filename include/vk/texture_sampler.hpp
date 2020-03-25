@@ -16,8 +16,6 @@ class TextureSampler {
  public:
   TextureSampler(const DeviceManager& deviceManager);
 
-  ~TextureSampler();
-
   const VkSampler getSampler() const;
 
  private:

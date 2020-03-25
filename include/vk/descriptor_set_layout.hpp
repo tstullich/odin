@@ -13,9 +13,8 @@
 namespace odin {
 class DescriptorSetLayout {
  public:
-  DescriptorSetLayout(const DeviceManager& deviceManager, bool computeDescriptorSet);
-
-  ~DescriptorSetLayout();
+  DescriptorSetLayout(const DeviceManager& deviceManager,
+                      bool computeDescriptorSet);
 
   const VkDescriptorSetLayout* getDescriptorSetLayout() const;
 

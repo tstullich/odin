@@ -22,10 +22,6 @@ odin::TextureSampler::TextureSampler(const DeviceManager& deviceManager) {
   }
 }
 
-odin::TextureSampler::~TextureSampler() {
-  std::cout << "IMPLEMENT TEXTURE SAMPLER DESCTRUCTOR!" << std::endl;
-}
-
 const VkSampler odin::TextureSampler::getSampler() const {
   return textureSampler;
 }

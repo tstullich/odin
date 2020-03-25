@@ -1,4 +1,5 @@
 #include "vk/bvh_buffer.hpp"
+
 #include "vk/command_pool.hpp"
 
 odin::BvhBuffer::BvhBuffer(const DeviceManager &deviceManager,
@@ -39,10 +40,6 @@ odin::BvhBuffer::BvhBuffer(const DeviceManager &deviceManager,
   descriptor.range = VK_WHOLE_SIZE;
 }
 
-odin::BvhBuffer::~BvhBuffer() {
-  std::cout << "IMPLEMENT BVH BUFFER DESCTRUCTOR!" << std::endl;
-}
-
 const VkBuffer odin::BvhBuffer::getBuffer() const { return buffer; }
 
 const VkDeviceMemory odin::BvhBuffer::getBufferMemory() const {
@@ -53,6 +50,4 @@ const VkDescriptorBufferInfo odin::BvhBuffer::getDescriptor() const {
   return descriptor;
 }
 
-const size_t odin::BvhBuffer::getNodeCount() const {
-  return numNodes;
-}
+const size_t odin::BvhBuffer::getNodeCount() const { return numNodes; }

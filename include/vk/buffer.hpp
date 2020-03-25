@@ -28,8 +28,6 @@ class Buffer {
  protected:
   Buffer();
 
-  ~Buffer();
-
   void copyBuffer(const DeviceManager& deviceManager,
                   const CommandPool& commandPool, VkBuffer srcBuffer,
                   VkBuffer dstBuffer, VkDeviceSize size);

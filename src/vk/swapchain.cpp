@@ -8,14 +8,6 @@ odin::Swapchain::Swapchain(const odin::QueueFamilyIndices& queueFamilies,
   createImageViews(logicalDevice);
 }
 
-odin::Swapchain::~Swapchain() {
-  std::cout << "IMPLEMENT SWAPCHAIN DESTRUCTOR!" << std::endl;
-}
-
-void odin::Swapchain::cleanup() {
-  // TODO Implement cleanup logic here
-}
-
 VkExtent2D odin::Swapchain::getExtent() const { return swapChainExtent; }
 
 VkFramebuffer odin::Swapchain::getFrameBuffer(size_t index) const {

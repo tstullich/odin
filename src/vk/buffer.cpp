@@ -2,10 +2,6 @@
 
 odin::Buffer::Buffer() {}
 
-odin::Buffer::~Buffer() {
-  std::cout << "IMPLEMENT BUFFER DESTRUCTOR!" << std::endl;
-}
-
 void odin::Buffer::copyBuffer(const DeviceManager& deviceManager,
                               const CommandPool& commandPool,
                               VkBuffer srcBuffer, VkBuffer dstBuffer,

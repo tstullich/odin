@@ -1,14 +1,11 @@
 #include "vk/depth_image.hpp"
+
 #include "vk/command_pool.hpp"
 
 odin::DepthImage::DepthImage(const DeviceManager& deviceManager,
                              const CommandPool& commandPool,
                              const Swapchain& swapChain) {
   createDepthResources(deviceManager, commandPool, swapChain);
-}
-
-odin::DepthImage::~DepthImage() {
-  std::cout << "IMPLEMENT DEPTH IMAGE DESTRUCTOR!" << std::endl;
 }
 
 void odin::DepthImage::createDepthResources(const DeviceManager& deviceManager,

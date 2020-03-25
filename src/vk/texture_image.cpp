@@ -13,10 +13,6 @@ odin::TextureImage::TextureImage(const DeviceManager& deviceManager,
   descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 }
 
-odin::TextureImage::~TextureImage() {
-  std::cout << "IMPLEMENT TEXTURE IMAGE DESTRUCTOR!" << std::endl;
-}
-
 void odin::TextureImage::copyBufferToImage(const DeviceManager& deviceManager,
                                            const CommandPool& commandPool,
                                            VkBuffer buffer, VkImage image,

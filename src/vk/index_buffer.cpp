@@ -1,4 +1,5 @@
 #include "vk/index_buffer.hpp"
+
 #include "vk/command_pool.hpp"
 
 odin::IndexBuffer::IndexBuffer(const DeviceManager& deviceManager,
@@ -36,16 +37,10 @@ odin::IndexBuffer::IndexBuffer(const DeviceManager& deviceManager,
   vkFreeMemory(deviceManager.getLogicalDevice(), stagingBufferMemory, nullptr);
 }
 
-odin::IndexBuffer::~IndexBuffer() {
-  std::cout << "IMPLEMENT INDEX BUFFER DESTRUCTOR!" << std::endl;
-}
-
 const VkBuffer odin::IndexBuffer::getBuffer() const { return buffer; }
 
 const VkDeviceMemory odin::IndexBuffer::getBufferMemory() const {
   return indexBufferMemory;
 }
 
-const uint32_t odin::IndexBuffer::getNumIndices() const {
-  return numIndices;
-}
+const uint32_t odin::IndexBuffer::getNumIndices() const { return numIndices; }

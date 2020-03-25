@@ -23,8 +23,6 @@ class IndexBuffer : public Buffer {
               const CommandPool& commandPool,
               const std::vector<uint32_t>& indices);
 
-  ~IndexBuffer();
-
   const VkBuffer getBuffer() const;
 
   const VkDeviceMemory getBufferMemory() const;

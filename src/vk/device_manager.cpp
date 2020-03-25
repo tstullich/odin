@@ -7,11 +7,6 @@ odin::DeviceManager::DeviceManager(const Instance& instance,
   createLogicalDevice(instance, surface, enableValidationLayers);
 }
 
-odin::DeviceManager::~DeviceManager() {
-  // TODO Move destructor logic out of main.cpp
-  std::cout << "IMPLEMENT DEVICE MANAGER DESTRUCTOR!" << std::endl;
-}
-
 bool odin::DeviceManager::checkDeviceExtensionSupport(
     VkPhysicalDevice physicalDevice) {
   uint32_t extensionCount;

@@ -15,10 +15,6 @@ odin::UniformBuffer::UniformBuffer(const DeviceManager& deviceManager,
   descriptor.range = VK_WHOLE_SIZE;
 }
 
-odin::UniformBuffer::~UniformBuffer() {
-  std::cout << "IMPLEMENT UNIFORM BUFFER DESTRUCTOR!" << std::endl;
-}
-
 const VkBuffer odin::UniformBuffer::getBuffer() const { return buffer; }
 
 const VkDescriptorBufferInfo odin::UniformBuffer::getDescriptor() const {

@@ -1,4 +1,5 @@
 #include "vk/vertex_buffer.hpp"
+
 #include "vk/command_pool.hpp"
 
 odin::VertexBuffer::VertexBuffer(const DeviceManager& deviceManager,
@@ -41,10 +42,6 @@ odin::VertexBuffer::VertexBuffer(const DeviceManager& deviceManager,
   descriptor.offset = 0;
   descriptor.buffer = buffer;
   descriptor.range = VK_WHOLE_SIZE;
-}
-
-odin::VertexBuffer::~VertexBuffer() {
-  std::cout << "IMPLEMENT VERTEX BUFFER DESTRUCTOR!" << std::endl;
 }
 
 const VkBuffer odin::VertexBuffer::getBuffer() const { return buffer; }

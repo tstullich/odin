@@ -7,10 +7,6 @@ odin::ComputePipeline::ComputePipeline(
   createPipeline(deviceManager, descriptorSetLayout, computeShaderPath);
 }
 
-odin::ComputePipeline::~ComputePipeline() {
-  std::cout << "IMPLEMENT COMPUTE PIPELINE DESTRUCTOR!" << std::endl;
-}
-
 const VkPipeline odin::ComputePipeline::getComputePipeline() const {
   return computePipeline;
 }
@@ -24,8 +20,7 @@ void odin::ComputePipeline::createPipeline(
     const DescriptorSetLayout& descriptorSetLayout,
     const std::string& computeShaderPath) {
   // Load compute shader
-  auto computeShaderCode =
-      FileReader::readFile(computeShaderPath);
+  auto computeShaderCode = FileReader::readFile(computeShaderPath);
 
   // Create compute shader module
   ShaderModule computeShaderModule(deviceManager.getLogicalDevice(),

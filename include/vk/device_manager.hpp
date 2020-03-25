@@ -38,8 +38,6 @@ class DeviceManager {
   DeviceManager(const Instance &instance, const VkSurfaceKHR &surface,
                 bool enableValidationLayers);
 
-  ~DeviceManager();
-
   QueueFamilyIndices findQueueFamilies(VkSurfaceKHR surface);
 
   const VkQueue getComputeQueue() const;
