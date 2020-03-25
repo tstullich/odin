@@ -19,3 +19,13 @@ make install
 ```
 
 Odin should then be installed in the `bin` directory. Type `odin --help` for more information.
+
+## TODOs
+Below is an unordered list of planned features and improvements for Odin
+1. Rewrite BVH construction and traversal logic to be more GPU-friendly
+2. Implement Multiple Importance Sampling
+3. Improve the compute and graphics pipelines to do batched rendering
+4. Update the camera model to use a view matrix
+5. Expand material support
+6. Add a GUI for tuning scene parameters at runtime (Dear Imgui)
+7. Move Vulkan header to use [Vulkan-Hpp](https://github.com/KhronosGroup/Vulkan-Hpp)
