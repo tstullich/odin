@@ -25,6 +25,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
 #include "renderer/aabb.hpp"
 #include "renderer/bvh.hpp"
 #include "renderer/camera.hpp"

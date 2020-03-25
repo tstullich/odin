@@ -14,6 +14,9 @@ set(GLM_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/glm)
 set(STB_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/stb)
 set(TINY_OBJ_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/tinyobjloader)
 
+# Special include directive to make ImGUI work
+set(IMGUI_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/src/imgui)
+
 set(ODIN_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(ODIN_INSTALL_BIN_DIR ${PROJECT_SOURCE_DIR}/bin)
 
@@ -41,6 +44,7 @@ include_directories(${VULKAN_INCLUDE_DIR})
 include_directories(${STB_INCLUDE_DIR})
 include_directories(${TINY_OBJ_INCLUDE_DIR})
 include_directories(${GLM_INCLUDE_DIR})
+include_directories(${IMGUI_INCLUDE_DIR})
 include_directories(${ODIN_INCLUDE_DIR})
 
 add_subdirectory(shaders)
