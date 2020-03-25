@@ -1,5 +1,6 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "renderer/application.hpp"
+
 #include <tiny_obj_loader.h>
 
 // Rename boost namespace for readability
@@ -471,7 +472,7 @@ void odin::Application::mainLoop() {
 int odin::Application::parseArguments(int argc, char *argv[]) {
   po::options_description desc("Allowed options");
   desc.add_options()("help", "Produce help message")(
-      "demo", "Runs renderer with pre-defined values")(
+      "demo", "Runs odin with pre-defined values")(
       "obj", po::value<std::string>(&MODEL_PATH), "OBJ model file path")(
       "tex", po::value<std::string>(&TEXTURE_PATH), "Texture file path");
 
@@ -492,7 +493,7 @@ int odin::Application::parseArguments(int argc, char *argv[]) {
   // Check if we have enabled demo mode
   if (vm.count("demo")) {
     std::cout << "Running in demo mode" << std::endl;
-    MODEL_PATH = "models/cube.obj";
+    MODEL_PATH = "models/triangle.obj";
     TEXTURE_PATH = "textures/texture.jpg";
     return 0;
   }
